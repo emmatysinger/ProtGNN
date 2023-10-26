@@ -42,10 +42,13 @@ class DistMultPredictor(nn.Module):
                            ('disease', 'rev_contraindication', 'drug'), 
                            ('disease', 'rev_indication', 'drug'),
                            ('disease', 'rev_off-label use', 'drug')]
+        self.etypes_pmf = [('protein', 'molfunc_protein', 'molecular_function'),
+                           ('molecular_function', 'molfunc_protein', 'protein')]
         
         self.node_types_dd = ['disease', 'drug']
+        self.node_types_pmf = ['protein', 'molecular_function']
         
-        if proto:
+        if proto: # WON'T DO PROTO FOR NOW
             self.W_gate = {}
             for i in self.node_types_dd:
                 temp_w = nn.Linear(n_hid * 2, 1)
@@ -61,14 +64,19 @@ class DistMultPredictor(nn.Module):
                 if os.path.exists(data_path):
                     df = pd.read_csv(data_path)
                                 
-                self.disease_dict = dict(df[df.x_type == 'disease'][['x_idx', 'x_id']].values)
-                self.disease_dict.update(dict(df[df.y_type == 'disease'][['y_idx', 'y_id']].values))
+                #self.disease_dict = dict(df[df.x_type == 'disease'][['x_idx', 'x_id']].values)
+                #self.disease_dict.update(dict(df[df.y_type == 'disease'][['y_idx', 'y_id']].values))
                 
+                self.mf_dict = dict(df[df.x_type == 'molecular_function'][['x_idx', 'x_id']].values)
+                self.mf_dict.update(dict(df[df.y_type == 'molecular_function'][['y_idx', 'y_id']].values))
+                
+                # CHANGE THIS TO MOLECULAR FUNCTION
                 if bert_measure == 'disease_name':
                     self.bert_embed = np.load('/n/scratch3/users/k/kh278/bert_basic.npy')
                     df_nodes_bert = pd.read_csv('/n/scratch3/users/k/kh278/nodes.csv')
                     
                 elif bert_measure == 'v1':
+                    # FIGURE OUT WHERE THESE EMBED FILES WERE GENERATED
                     self.bert_embed = np.load('/n/scratch3/users/k/kh278/disease_embeds_single_def.npy')
                     df_nodes_bert = pd.read_csv('/n/scratch3/users/k/kh278/disease_nodes_for_BERT_embeds.csv')
                 
@@ -126,6 +134,7 @@ class DistMultPredictor(nn.Module):
                 etypes_train = graph.canonical_etypes
             else:
                 etypes_train = self.etypes_dd
+                #etypes_train = self.etypes_pmf
             
             if only_relation is not None:
                 if only_relation == 'indication':

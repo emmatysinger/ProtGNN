@@ -38,7 +38,7 @@ class TxGNN:
                        weight_bias_track = False,
                        proj_name = 'TxGNN',
                        exp_name = 'TxGNN',
-                       device = 'cuda:0'):
+                       device = 'cpu'): #changed device default to 'cpu' from 'cuda:0'
         self.device = torch.device(device)
         self.weight_bias_track = weight_bias_track
         self.G = data.G
@@ -56,6 +56,9 @@ class TxGNN:
                   ('disease', 'rev_contraindication', 'drug'), 
                   ('disease', 'rev_indication', 'drug'), 
                   ('disease', 'rev_off-label use', 'drug')]
+        
+        self.pmf_etypes = [("protein", "molfunc_protein", "molecular_function"), 
+                           ("molecular_function", "molfunc_protein", "protein")]
         
         if self.weight_bias_track:
             import wandb
@@ -122,6 +125,7 @@ class TxGNN:
                   ).to(self.device)    
         self.best_model = self.model
         
+    # UPDATE edgedataloader
     def pretrain(self, n_epoch = 1, learning_rate = 1e-3, batch_size = 1024, train_print_per_n = 20, sweep_wandb = None):
         
         if self.no_kg:
@@ -131,9 +135,10 @@ class TxGNN:
         print('Creating minibatch pretraining dataloader...')
         train_eid_dict = {etype: self.G.edges(form = 'eid', etype =  etype) for etype in self.G.canonical_etypes}
         sampler = dgl.dataloading.MultiLayerFullNeighborSampler(2)
-        dataloader = dgl.dataloading.EdgeDataLoader(
+        sampler = dgl.dataloading.as_edge_prediction_sampler(
+            sampler, negative_sampler=Minibatch_NegSampler(self.G, 1, 'fix_dst'))   
+        dataloader = dgl.dataloading.DataLoader(
             self.G, train_eid_dict, sampler,
-            negative_sampler=Minibatch_NegSampler(self.G, 1, 'fix_dst'),
             batch_size=batch_size,
             shuffle=True,
             drop_last=False,
@@ -144,7 +149,7 @@ class TxGNN:
         print('Start pre-training with #param: %d' % (get_n_params(self.model)))
 
         for epoch in range(n_epoch):
-
+            print(len(dataloader))
             for step, (nodes, pos_g, neg_g, blocks) in enumerate(dataloader):
 
                 blocks = [i.to(self.device) for i in blocks]
@@ -686,7 +691,7 @@ class TxGNN:
             df_temp[self.relation + '_layer1_att'] = scores[0][etype].reshape(-1,)
             df_temp[self.relation + '_layer2_att'] = scores[1][etype].reshape(-1,)
 
-            all_att_df = all_att_df.append(df_temp)
+            all_att_df = pd.concat([all_att_df,df_temp])
         
         all_att_df.to_pickle(os.path.join(path, 'graphmask_output_' + self.relation + '.pkl'))
         return all_att_df
