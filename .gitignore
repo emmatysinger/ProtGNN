@@ -127,3 +127,17 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# embeddings
+embeddings/embeddings1
+embeddings/embeddings2
+embeddings/embeddings3
+embeddings/embeddings4
+embeddings/embeddings5
+embeddings/embeddings6
+embeddings/embeddings7
+embeddings/esm_embeddings
+
+# models
+graphmask_model*/
+model_*/

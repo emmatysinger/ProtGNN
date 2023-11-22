@@ -28,7 +28,7 @@ warnings.filterwarnings("ignore")
 
 #device = torch.device("cuda:0")
 
-from .data_splits.datasplit import DataSplitter
+from .data_splits.datasplit import DataSplitter, DataSplit
 
 def dataverse_download(url, save_path):
     """dataverse download helper with progress bar
@@ -60,7 +60,6 @@ def data_download_wrapper(url, save_path):
         print("Done!")
         
 def preprocess_kg(path, split):
-    # FOR PROT, THIS IS NOT USED
     if split in ['cell_proliferation', 'mental_health', 'cardiovascular', 'anemia', 'adrenal_gland']:
         
         print('Generating disease area using ontology... might take several minutes...')
@@ -87,10 +86,37 @@ def preprocess_kg(path, split):
         df.to_csv(os.path.join(path, 'kg.csv'), index = False)
         df = df[['x_type', 'x_id', 'relation', 'y_type', 'y_id', 'split']]
 
+    elif split in ['binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity']:
+        
+        print('Generating molecular function area using gene ontology... might take several minutes...')
+        name2id = {
+            'binding': 'GO:0005488', 
+            'transporter activity': 'GO:0005215',
+            'molecular function regulator': 'GO:0098772', 
+            'oxidoreductase activity': 'GO:0016491',
+            'hydrolase activity': 'GO:0016787',
+            'transferase activity': 'GO:0016740'
+        }
+        ds = DataSplit(kg_path = path)
+        test_kg = ds.get_test_kg_for_disease(name2id[split], test_size = 0.05)
+        all_kg = ds.kg
+        all_kg['split'] = 'train'
+        test_kg['split'] = 'test'
+
+        df = pd.concat([all_kg, test_kg]).drop_duplicates(subset = ['x_index', 'y_index'], keep = 'last').reset_index(drop = True)
+
+        path = os.path.join(path, split + '_kg')
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+        df.to_csv(os.path.join(path, 'kg.csv'), index = False)
+        df = df[['x_type', 'x_id', 'relation', 'y_type', 'y_id', 'split']]
+        
     else:
         ## random, complex disease splits
         df = pd.read_csv(os.path.join(path, 'kg.csv'))
         df = df[['x_type', 'x_id', 'relation', 'y_type', 'y_id']]
+    
     unique_relation = np.unique(df.relation.values)
     undirected_index = []
     
@@ -568,8 +594,8 @@ def print_dict(x, dd_only = True, pmf_only = False):
         for i in etypes:
             print(str(i) + ': ' + str(x[i]))
     if pmf_only:
-        etypes = [('protein', 'molfunc_protein', 'molecular_function'),
-                  ('molecular_function', 'molfunc_protein', 'protein')]
+        etypes = [('gene/protein', 'molfunc_protein', 'molecular_function'),
+                  ('molecular_function', 'rev_molfunc_protein', 'gene/protein')]
         
         for i in etypes:
             print(str(i) + ': ' + str(x[i]))
@@ -752,6 +778,34 @@ def process_disease_area_split(data_folder, df, df_test, split):
     disease_rel_types = ['rev_contraindication', 'rev_indication', 'rev_off-label use']
     temp = df_test[df_test.relation.isin(disease_rel_types)]
     df_test = df_test.drop(temp[~temp.x_idx.isin(disease_list.node_idx.unique())].index)
+    
+    return df_test
+
+def process_molfunc_area_split(data_folder, df, df_test, split):
+    molfunc_file_path = os.path.join(data_folder, 'molecular_function_files')
+    molfunc_list = pd.read_csv(os.path.join(molfunc_file_path, split + '.csv'))
+    
+    id2idx = dict(df[df.x_type == 'molecular_function'][['x_id', 'x_idx']].drop_duplicates().values)
+    id2idx.update(dict(df[df.y_type == 'molecular_function'][['y_id', 'y_idx']].drop_duplicates().values))
+
+    temp_dict = {}
+
+    # for merged disease ids
+    for i,j in id2idx.items():
+        try:
+            if '_' in i:
+                for x in i.split('_'):
+                    temp_dict[str(float(x))] = j
+        except:
+            temp_dict[str(float(i))] = j
+
+    id2idx.update(temp_dict)
+
+    molfunc_list['node_idx'] = molfunc_list.node_id.apply(lambda x: map_node_id_2_idx(x, id2idx))
+
+    molfunc_rel_types = ['molfunc_protein']
+    temp = df_test[df_test.relation.isin(molfunc_rel_types)]
+    df_test = df_test.drop(temp[~temp.x_idx.isin(molfunc_list.node_idx.unique())].index)
     
     return df_test
 

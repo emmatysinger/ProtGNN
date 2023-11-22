@@ -57,8 +57,8 @@ class TxGNN:
                   ('disease', 'rev_indication', 'drug'), 
                   ('disease', 'rev_off-label use', 'drug')]
         
-        self.pmf_etypes = [("protein", "molfunc_protein", "molecular_function"), 
-                           ("molecular_function", "molfunc_protein", "protein")]
+        self.pmf_etypes = [("gene/protein", "molfunc_protein", "molecular_function"), 
+                           ("molecular_function", "rev_molfunc_protein", "gene/protein")]
         
         if self.weight_bias_track:
             import wandb
@@ -149,7 +149,6 @@ class TxGNN:
         print('Start pre-training with #param: %d' % (get_n_params(self.model)))
 
         for epoch in range(n_epoch):
-            print(len(dataloader))
             for step, (nodes, pos_g, neg_g, blocks) in enumerate(dataloader):
 
                 blocks = [i.to(self.device) for i in blocks]
@@ -217,8 +216,9 @@ class TxGNN:
             negative_graph = neg_sampler(self.G)
             pred_score_pos, pred_score_neg, pos_score, neg_score = self.model(self.G, negative_graph, pretrain_mode = False, mode = 'train')
 
-            pos_score = torch.cat([pred_score_pos[i] for i in self.dd_etypes])
-            neg_score = torch.cat([pred_score_neg[i] for i in self.dd_etypes])
+            pos_score = torch.cat([pred_score_pos[i] for i in self.pmf_etypes]) #CHANGED
+            neg_score = torch.cat([pred_score_neg[i] for i in self.pmf_etypes]) #CHANGED
+            
 
             scores = torch.sigmoid(torch.cat((pos_score, neg_score)).reshape(-1,))
             labels = [1] * len(pos_score) + [0] * len(neg_score)
@@ -251,9 +251,9 @@ class TxGNN:
                 ))
 
                 print('----- AUROC Performance in Each Relation -----')
-                print_dict(auroc_rel)
+                print_dict(auroc_rel, pmf_only=True, dd_only=False)
                 print('----- AUPRC Performance in Each Relation -----')
-                print_dict(auprc_rel)
+                print_dict(auprc_rel, pmf_only=True, dd_only=False)
                 print('----------------------------------------------')
 
             del pred_score_pos, pred_score_neg, scores, labels
@@ -261,7 +261,7 @@ class TxGNN:
             if (epoch) % valid_per_n == 0:
                 # validation tracking...
                 print('Validation.....')
-                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, self.dd_etypes, self.device, mode = 'valid')
+                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, self.pmf_etypes, self.device, mode = 'valid')
 
                 if best_val_acc < macro_auroc:
                     best_val_acc = macro_auroc
@@ -279,9 +279,9 @@ class TxGNN:
                 ))
 
                 print('----- AUROC Performance in Each Relation -----')
-                print_dict(auroc_rel)
+                print_dict(auroc_rel, pmf_only=True, dd_only=False)
                 print('----- AUPRC Performance in Each Relation -----')
-                print_dict(auprc_rel)
+                print_dict(auprc_rel, pmf_only=True, dd_only=False)
                 print('----------------------------------------------')
                 
                 if sweep_wandb is not None:
@@ -303,7 +303,7 @@ class TxGNN:
         
         print('Testing...')
 
-        (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss, pred_pos, pred_neg = evaluate_fb(self.best_model, self.g_test_pos, self.g_test_neg, self.G, self.dd_etypes, self.device, True, mode = 'test')
+        (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss, pred_pos, pred_neg = evaluate_fb(self.best_model, self.g_test_pos, self.g_test_neg, self.G, self.pmf_etypes, self.device, True, mode = 'test')
 
         print('Testing Loss %.4f Testing Micro AUROC %.4f Testing Micro AUPRC %.4f Testing Macro AUROC %.4f Testing Macro AUPRC %.4f' % (
             loss,
@@ -329,9 +329,9 @@ class TxGNN:
                 pickle.dump(get_wandb_log_dict(auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc, "Testing"), f)
             
         print('----- AUROC Performance in Each Relation -----')
-        print_dict(auroc_rel, dd_only = False)
+        print_dict(auroc_rel, pmf_only=True, dd_only=False)
         print('----- AUPRC Performance in Each Relation -----')
-        print_dict(auprc_rel, dd_only = False)
+        print_dict(auprc_rel, pmf_only=True, dd_only=False)
         print('----------------------------------------------')
         
         
@@ -484,8 +484,8 @@ class TxGNN:
         
         self.relation = relation
         
-        if relation not in ['indication', 'contraindication', 'off-label']:
-            raise ValueError("Please select the following three relations: 'indication', 'contraindication', 'off-label' !")
+        #if relation not in ['indication', 'contraindication', 'off-label']:
+        #    raise ValueError("Please select the following three relations: 'indication', 'contraindication', 'off-label' !")
          
         if relation == 'indication':
             etypes_train = [('drug', 'indication', 'disease'),
@@ -497,7 +497,7 @@ class TxGNN:
             etypes_train = [('drug', 'off-label use', 'disease'),
                            ('disease', 'rev_off-label use', 'drug')]
         else:
-            etypes_train = dd_etypes    
+            etypes_train = self.pmf_etypes    
         
         best_loss_sum = 100        
         

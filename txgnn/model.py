@@ -42,11 +42,11 @@ class DistMultPredictor(nn.Module):
                            ('disease', 'rev_contraindication', 'drug'), 
                            ('disease', 'rev_indication', 'drug'),
                            ('disease', 'rev_off-label use', 'drug')]
-        self.etypes_pmf = [('protein', 'molfunc_protein', 'molecular_function'),
-                           ('molecular_function', 'molfunc_protein', 'protein')]
+        self.etypes_pmf = [('gene/protein', 'molfunc_protein', 'molecular_function'),
+                           ('molecular_function', 'rev_molfunc_protein', 'gene/protein')]
         
         self.node_types_dd = ['disease', 'drug']
-        self.node_types_pmf = ['protein', 'molecular_function']
+        self.node_types_pmf = ['gene/protein', 'molecular_function']
         
         if proto: # WON'T DO PROTO FOR NOW
             self.W_gate = {}
@@ -134,7 +134,7 @@ class DistMultPredictor(nn.Module):
                 etypes_train = graph.canonical_etypes
             else:
                 etypes_train = self.etypes_dd
-                #etypes_train = self.etypes_pmf
+                etypes_train = self.etypes_pmf
             
             if only_relation is not None:
                 if only_relation == 'indication':

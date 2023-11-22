@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 import dgl
 
-from .utils import preprocess_kg, create_split, process_disease_area_split, create_dgl_graph, evaluate_graph_construct, convert2str, data_download_wrapper
+from .utils import preprocess_kg, create_split, process_disease_area_split, process_molfunc_area_split, create_dgl_graph, evaluate_graph_construct, convert2str, data_download_wrapper
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -25,8 +25,74 @@ class TxData:
         data_download_wrapper('https://dataverse.harvard.edu/api/access/datafile/6180617', os.path.join(self.data_folder, 'node.csv'))
         data_download_wrapper('https://dataverse.harvard.edu/api/access/datafile/6180616', os.path.join(self.data_folder, 'edges.csv'))
         
+    def prepare_split(self, split = 'random',
+                     disease_eval_idx = None,
+                     seed = 42,
+                     no_kg = False):
         
-    def prepare_split(self, split = 'complex_disease',
+        """
+        if split not in ['random', 
+                         'binding', 
+                         'structural_molecule', 
+                         'catalytic', 
+                         'cargo_receptor', 
+                         'antioxidant', 
+                         'molecular_carrier', 
+                         'transporter', 
+                         'translation_regulator', 
+                         'transcription_regulator',
+                         'molecular_function_regulator',
+                         'hijacked_molecular_function',
+                         ]:"""
+        if split not in ['binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity']:
+            raise ValueError("Please select on of the following supported splits: 'binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity'")
+        self.split = split
+
+        if split != 'random':
+            kg_path = os.path.join(self.data_folder, split + '_kg', 'kg_directed.csv')
+        else:
+            kg_path = os.path.join(self.data_folder, 'kg_directed.csv')
+
+        if os.path.exists(kg_path):
+            print('Found saved processed KG... Loading...')
+            df = pd.read_csv(kg_path)
+        else:
+            if os.path.exists(os.path.join(self.data_folder, 'kg.csv')):
+                print('First time usage... Mapping TxData raw KG to directed csv... it takes several minutes...')
+                preprocess_kg(self.data_folder, split)
+                df = pd.read_csv(kg_path)
+            else:
+                raise ValueError("KG file path does not exist...")
+        
+        split_data_path = os.path.join(self.data_folder, self.split + '_' + str(seed))
+
+        if not os.path.exists(os.path.join(split_data_path, 'train.csv')):
+            if not os.path.exists(split_data_path):
+                os.mkdir(split_data_path)           
+            print('Creating splits... it takes several minutes...')
+            df_train, df_valid, df_test = create_split(df, split, disease_eval_idx, split_data_path, seed)
+        else:
+            print('Splits detected... Loading splits....')
+            df_train = pd.read_csv(os.path.join(split_data_path, 'train.csv'))
+            df_valid = pd.read_csv(os.path.join(split_data_path, 'valid.csv'))
+            df_test = pd.read_csv(os.path.join(split_data_path, 'test.csv'))
+
+        if split != 'random':
+            df_test = process_molfunc_area_split(self.data_folder, df, df_test, split)
+        
+        print('Creating DGL graph....')
+        # create dgl graph
+        g = create_dgl_graph(df_train, df)
+         
+        self.G = g         
+        self.df, self.df_train, self.df_valid, self.df_test = df, df_train, df_valid, df_test
+        self.disease_eval_idx = disease_eval_idx
+        self.no_kg = no_kg
+        self.seed = seed
+        print('Done!')
+
+
+    def prepare_split_old(self, split = 'complex_disease',
                      disease_eval_idx = None,
                      seed = 42,
                      no_kg = False):
@@ -84,6 +150,7 @@ class TxData:
         
         if split not in ['random', 'complex_disease', 'disease_eval', 'full_graph', 'downstream_pred']:
             # in disease area split
+            
             df_test = process_disease_area_split(self.data_folder, df, df_test, split)
         
         print('Creating DGL graph....')
@@ -96,9 +163,35 @@ class TxData:
         self.no_kg = no_kg
         self.seed = seed
         print('Done!')
-        
-        
+
     def retrieve_id_mapping(self):
+        df = self.df
+        df['x_id'] = df.x_id.apply(lambda x: convert2str(x))
+        df['y_id'] = df.y_id.apply(lambda x: convert2str(x))
+
+        idx2id_prot = dict(df[df.x_type == 'gene/protein'][['x_idx', 'x_id']].drop_duplicates().values)
+        idx2id_prot.update(dict(df[df.y_type == 'gene/protein'][['y_idx', 'y_id']].drop_duplicates().values))
+
+        idx2id_molfunc = dict(df[df.x_type == 'molecular_function'][['x_idx', 'x_id']].drop_duplicates().values)
+        idx2id_molfunc.update(dict(df[df.y_type == 'molecular_function'][['y_idx', 'y_id']].drop_duplicates().values))
+
+        df_ = pd.read_csv(os.path.join(self.data_folder, 'kg.csv'))
+        df_['x_id'] = df_.x_id.apply(lambda x: convert2str(x))
+        df_['y_id'] = df_.y_id.apply(lambda x: convert2str(x))
+
+        id2name_molfunc = dict(df_[df_.x_type == 'molecular_function'][['x_id', 'x_name']].drop_duplicates().values)
+        id2name_molfunc.update(dict(df_[df_.y_type == 'molecular_function'][['y_id', 'y_name']].drop_duplicates().values))
+
+        id2name_prot = dict(df_[df_.x_type == 'gene/protein'][['x_id', 'x_name']].drop_duplicates().values)
+        id2name_prot.update(dict(df_[df_.y_type == 'gene/protein'][['y_id', 'y_name']].drop_duplicates().values))
+        
+        return {'id2name_prot': id2name_prot,
+                'id2name_molfunc': id2name_molfunc,
+                'idx2id_molfunc': idx2id_molfunc,
+                'idx2id_ptor': idx2id_prot
+               }  
+        
+    def retrieve_id_mapping_old(self):
         df = self.df
         df['x_id'] = df.x_id.apply(lambda x: convert2str(x))
         df['y_id'] = df.y_id.apply(lambda x: convert2str(x))
