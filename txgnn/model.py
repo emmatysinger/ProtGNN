@@ -133,21 +133,8 @@ class DistMultPredictor(nn.Module):
             if len(graph.canonical_etypes) == 1:
                 etypes_train = graph.canonical_etypes
             else:
-                etypes_train = self.etypes_dd
                 etypes_train = self.etypes_pmf
             
-            if only_relation is not None:
-                if only_relation == 'indication':
-                    etypes_train = [('drug', 'indication', 'disease'),
-                                    ('disease', 'rev_indication', 'drug')]
-                elif only_relation == 'contraindication':
-                    etypes_train = [('drug', 'contraindication', 'disease'), 
-                                   ('disease', 'rev_contraindication', 'drug')]
-                elif only_relation == 'off-label':
-                    etypes_train = [('drug', 'off-label use', 'disease'),
-                                   ('disease', 'rev_off-label use', 'drug')]
-                else:
-                    return ValueError
             
             graph.ndata['h'] = h
             
@@ -160,8 +147,7 @@ class DistMultPredictor(nn.Module):
                     s_l.append(out)
                     scores[etype] = out
             else:
-                # finetuning on drug disease only...
-                
+                # finetuning on protein molecular function only...
                 for etype in etypes_train:
 
                     if self.proto:

@@ -4,6 +4,7 @@ import argparse
 import copy
 import pickle
 from argparse import ArgumentParser
+import builtins
 
 import numpy as np
 import pandas as pd
@@ -47,6 +48,7 @@ class TxGNN:
         self.disease_eval_idx = data.disease_eval_idx
         self.split = data.split
         self.no_kg = data.no_kg
+        self.nodes = pd.read_csv(os.path.join(self.data_folder, 'nodes.csv'))
         
         self.disease_rel_types = ['rev_contraindication', 'rev_indication', 'rev_off-label use']
         
@@ -80,14 +82,15 @@ class TxGNN:
                                exp_lambda = 0.7,
                                num_walks = 200,
                                walk_mode = 'bit',
-                               path_length = 2):
+                               path_length = 2,
+                               esm = False):
         
         if self.no_kg and proto:
             print('Ablation study on No-KG. No proto learning is used...')
             proto = False
         
         self.G = self.G.to('cpu')
-        self.G = initialize_node_embedding(self.G, n_inp)
+        self.G = initialize_node_embedding(self.G, n_inp, self.df, self.nodes, esm = esm)
         self.g_valid_pos, self.g_valid_neg = evaluate_graph_construct(self.df_valid, self.G, 'fix_dst', 1, self.device)
         self.g_test_pos, self.g_test_neg = evaluate_graph_construct(self.df_test, self.G, 'fix_dst', 1, self.device)
 
@@ -126,8 +129,10 @@ class TxGNN:
         self.best_model = self.model
         
     # UPDATE edgedataloader
-    def pretrain(self, n_epoch = 1, learning_rate = 1e-3, batch_size = 1024, train_print_per_n = 20, sweep_wandb = None):
-        
+    def pretrain(self, save_path, name, n_epoch = 1, learning_rate = 1e-3, batch_size = 1024, train_print_per_n = 20, sweep_wandb = None, save_per_n = 10):
+        def print(*args, **kwargs):
+            builtins.print(*args, **kwargs, flush=True)
+
         if self.no_kg:
             raise ValueError('During No-KG ablation, pretraining is infeasible because it is the same as finetuning...')
             
@@ -149,6 +154,7 @@ class TxGNN:
         print('Start pre-training with #param: %d' % (get_n_params(self.model)))
 
         for epoch in range(n_epoch):
+            print(f'Number of steps: {len(dataloader)}')
             for step, (nodes, pos_g, neg_g, blocks) in enumerate(dataloader):
 
                 blocks = [i.to(self.device) for i in blocks]
@@ -194,16 +200,22 @@ class TxGNN:
                         macro_auroc,
                         macro_auprc
                     ))
+            if epoch % save_per_n == 0:
+                self.save_model(os.path.join(save_path, name + f"_{epoch}"))
         self.best_model = copy.deepcopy(self.model)
         
-    def finetune(self, n_epoch = 500, 
+    def finetune(self, save_path, name,
+                       n_epoch = 500, 
                        learning_rate = 1e-3, 
                        train_print_per_n = 5, 
                        valid_per_n = 25,
                        sweep_wandb = None,
-                       save_name = None):
+                       save_name = None,
+                       save_per_n = 50):
         
         best_val_acc = 0
+        def print(*args, **kwargs):
+            builtins.print(*args, **kwargs, flush=True)
 
         self.G = self.G.to(self.device)
         neg_sampler = Full_Graph_NegSampler(self.G, 1, 'fix_dst', self.device)
@@ -300,7 +312,9 @@ class TxGNN:
                                   })
 
                     self.wandb.log(temp_d)
-        
+
+            if epoch % save_per_n == 0:
+                self.save_model(os.path.join(save_path, name + f"_{epoch}"))
         print('Testing...')
 
         (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss, pred_pos, pred_neg = evaluate_fb(self.best_model, self.g_test_pos, self.g_test_neg, self.G, self.pmf_etypes, self.device, True, mode = 'test')
@@ -384,11 +398,12 @@ class TxGNN:
         
         return h
                       
+    # NEEDS UPDATING
     def retrieve_sim_diseases(self, relation, k = 5, path = None):
-        if relation not in ['indication', 'contraindication', 'off-label']:
-            raise ValueError("Please select the following three relations: 'indication', 'contraindication', 'off-label' !")
+        if relation != 'molfunc_protein':
+            relation = 'molfunc_protein'
                       
-        etypes = self.dd_etypes
+        etypes = self.pmf_etypes
 
         out_degrees = {}
         in_degrees = {}
@@ -451,14 +466,11 @@ class TxGNN:
         return similar_diseases
                       
     def load_pretrained(self, path):
-        ## load config file
-        
         with open(os.path.join(path, 'config.pkl'), 'rb') as f:
             config = pickle.load(f)
             
         self.model_initialize(**config)
         self.config = config
-        #self.G = initialize_node_embedding(self.G, config['n_inp'])
         
         state_dict = torch.load(os.path.join(path, 'model.pt'), map_location = torch.device('cpu'))
         if next(iter(state_dict))[:7] == 'module.':
@@ -474,6 +486,7 @@ class TxGNN:
         self.model = self.model.to(self.device)
         self.best_model = self.model
         
+    # NEEDS UPDATING
     def train_graphmask(self, relation = 'indication',
                               learning_rate = 3e-4,
                               allowance = 0.005,

@@ -44,8 +44,8 @@ class TxData:
                          'molecular_function_regulator',
                          'hijacked_molecular_function',
                          ]:"""
-        if split not in ['binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity']:
-            raise ValueError("Please select on of the following supported splits: 'binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity'")
+        if split not in ['random','binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity']:
+            raise ValueError("Please select on of the following supported splits: 'random', 'binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity'")
         self.split = split
 
         if split != 'random':

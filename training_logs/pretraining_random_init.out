@@ -1,0 +1,64 @@
+source /etc/profile.d/modules.sh
+Activating txgnn_env2 ...
+Starting training script ...
+[2023-11-25 00:37:34] Importing libraries ...
+[2023-11-25 00:37:34] Loading data ...
+Found local copy...
+Found local copy...
+Found local copy...
+Found saved processed KG... Loading...
+Splits detected... Loading splits....
+Creating DGL graph....
+Done!
+[2023-11-25 00:37:55] Loaded data!
+[2023-11-25 00:37:55] Initializing model ...
+[2023-11-25 00:38:03] Initialized model!
+[2023-11-25 00:38:03] Starting to pretrain ...
+Creating minibatch pretraining dataloader...
+Start pre-training with #param: 164032000
+Number of steps: 6576
+Epoch: 0 Step: 0 LR: 0.00100 Loss 0.6931, Pretrain Micro AUROC 0.4956 Pretrain Micro AUPRC 0.5225 Pretrain Macro AUROC 0.5054 Pretrain Macro AUPRC 0.5942
+Epoch: 0 Step: 500 LR: 0.00100 Loss 0.5417, Pretrain Micro AUROC 0.7839 Pretrain Micro AUPRC 0.7586 Pretrain Macro AUROC 0.8280 Pretrain Macro AUPRC 0.8528
+Epoch: 0 Step: 1000 LR: 0.00100 Loss 0.5073, Pretrain Micro AUROC 0.8164 Pretrain Micro AUPRC 0.7843 Pretrain Macro AUROC 0.8740 Pretrain Macro AUPRC 0.8820
+Epoch: 0 Step: 1500 LR: 0.00100 Loss 0.4873, Pretrain Micro AUROC 0.8324 Pretrain Micro AUPRC 0.8044 Pretrain Macro AUROC 0.9010 Pretrain Macro AUPRC 0.9062
+Epoch: 0 Step: 2000 LR: 0.00100 Loss 0.4949, Pretrain Micro AUROC 0.8193 Pretrain Micro AUPRC 0.7916 Pretrain Macro AUROC 0.8731 Pretrain Macro AUPRC 0.8873
+Epoch: 0 Step: 2500 LR: 0.00100 Loss 0.4680, Pretrain Micro AUROC 0.8369 Pretrain Micro AUPRC 0.8107 Pretrain Macro AUROC 0.8884 Pretrain Macro AUPRC 0.9077
+Epoch: 0 Step: 3000 LR: 0.00100 Loss 0.4754, Pretrain Micro AUROC 0.8358 Pretrain Micro AUPRC 0.8102 Pretrain Macro AUROC 0.9433 Pretrain Macro AUPRC 0.9442
+Epoch: 0 Step: 3500 LR: 0.00100 Loss 0.4568, Pretrain Micro AUROC 0.8562 Pretrain Micro AUPRC 0.8299 Pretrain Macro AUROC 0.8908 Pretrain Macro AUPRC 0.9101
+Epoch: 0 Step: 4000 LR: 0.00100 Loss 0.4478, Pretrain Micro AUROC 0.8528 Pretrain Micro AUPRC 0.8289 Pretrain Macro AUROC 0.9237 Pretrain Macro AUPRC 0.9196
+Epoch: 0 Step: 4500 LR: 0.00100 Loss 0.4593, Pretrain Micro AUROC 0.8469 Pretrain Micro AUPRC 0.8199 Pretrain Macro AUROC 0.9224 Pretrain Macro AUPRC 0.9170
+Epoch: 0 Step: 5000 LR: 0.00100 Loss 0.4411, Pretrain Micro AUROC 0.8619 Pretrain Micro AUPRC 0.8348 Pretrain Macro AUROC 0.8991 Pretrain Macro AUPRC 0.9133
+Epoch: 0 Step: 5500 LR: 0.00100 Loss 0.4696, Pretrain Micro AUROC 0.8352 Pretrain Micro AUPRC 0.8072 Pretrain Macro AUROC 0.8834 Pretrain Macro AUPRC 0.9028
+Epoch: 0 Step: 6000 LR: 0.00100 Loss 0.4492, Pretrain Micro AUROC 0.8576 Pretrain Micro AUPRC 0.8316 Pretrain Macro AUROC 0.9199 Pretrain Macro AUPRC 0.9236
+Epoch: 0 Step: 6500 LR: 0.00100 Loss 0.4881, Pretrain Micro AUROC 0.8632 Pretrain Micro AUPRC 0.8360 Pretrain Macro AUROC 0.9306 Pretrain Macro AUPRC 0.9304
+Number of steps: 6576
+Epoch: 1 Step: 0 LR: 0.00100 Loss 0.4302, Pretrain Micro AUROC 0.8708 Pretrain Micro AUPRC 0.8432 Pretrain Macro AUROC 0.9360 Pretrain Macro AUPRC 0.9331
+Epoch: 1 Step: 500 LR: 0.00100 Loss 0.4561, Pretrain Micro AUROC 0.8457 Pretrain Micro AUPRC 0.8168 Pretrain Macro AUROC 0.8816 Pretrain Macro AUPRC 0.8933
+Epoch: 1 Step: 1000 LR: 0.00100 Loss 0.4295, Pretrain Micro AUROC 0.8659 Pretrain Micro AUPRC 0.8439 Pretrain Macro AUROC 0.9349 Pretrain Macro AUPRC 0.9316
+Epoch: 1 Step: 1500 LR: 0.00100 Loss 0.4289, Pretrain Micro AUROC 0.8650 Pretrain Micro AUPRC 0.8455 Pretrain Macro AUROC 0.9444 Pretrain Macro AUPRC 0.9357
+Epoch: 1 Step: 2000 LR: 0.00100 Loss 0.4381, Pretrain Micro AUROC 0.8648 Pretrain Micro AUPRC 0.8448 Pretrain Macro AUROC 0.8994 Pretrain Macro AUPRC 0.9100
+Epoch: 1 Step: 2500 LR: 0.00100 Loss 0.4264, Pretrain Micro AUROC 0.8685 Pretrain Micro AUPRC 0.8468 Pretrain Macro AUROC 0.9307 Pretrain Macro AUPRC 0.9259
+Epoch: 1 Step: 3000 LR: 0.00100 Loss 0.4311, Pretrain Micro AUROC 0.8684 Pretrain Micro AUPRC 0.8459 Pretrain Macro AUROC 0.9459 Pretrain Macro AUPRC 0.9426
+Epoch: 1 Step: 3500 LR: 0.00100 Loss 0.4367, Pretrain Micro AUROC 0.8738 Pretrain Micro AUPRC 0.8476 Pretrain Macro AUROC 0.9452 Pretrain Macro AUPRC 0.9444
+Epoch: 1 Step: 4000 LR: 0.00100 Loss 0.4345, Pretrain Micro AUROC 0.8686 Pretrain Micro AUPRC 0.8415 Pretrain Macro AUROC 0.8988 Pretrain Macro AUPRC 0.9113
+Epoch: 1 Step: 4500 LR: 0.00100 Loss 0.4233, Pretrain Micro AUROC 0.8654 Pretrain Micro AUPRC 0.8450 Pretrain Macro AUROC 0.9507 Pretrain Macro AUPRC 0.9489
+Epoch: 1 Step: 5000 LR: 0.00100 Loss 0.4215, Pretrain Micro AUROC 0.8760 Pretrain Micro AUPRC 0.8518 Pretrain Macro AUROC 0.9321 Pretrain Macro AUPRC 0.9294
+Epoch: 1 Step: 5500 LR: 0.00100 Loss 0.4115, Pretrain Micro AUROC 0.8765 Pretrain Micro AUPRC 0.8523 Pretrain Macro AUROC 0.9284 Pretrain Macro AUPRC 0.9267
+Epoch: 1 Step: 6000 LR: 0.00100 Loss 0.4273, Pretrain Micro AUROC 0.8666 Pretrain Micro AUPRC 0.8442 Pretrain Macro AUROC 0.9312 Pretrain Macro AUPRC 0.9254
+Epoch: 1 Step: 6500 LR: 0.00100 Loss 0.4167, Pretrain Micro AUROC 0.8720 Pretrain Micro AUPRC 0.8486 Pretrain Macro AUROC 0.9165 Pretrain Macro AUPRC 0.9310
+Number of steps: 6576
+Epoch: 2 Step: 0 LR: 0.00100 Loss 0.4019, Pretrain Micro AUROC 0.8881 Pretrain Micro AUPRC 0.8701 Pretrain Macro AUROC 0.9618 Pretrain Macro AUPRC 0.9577
+Epoch: 2 Step: 500 LR: 0.00100 Loss 0.4184, Pretrain Micro AUROC 0.8753 Pretrain Micro AUPRC 0.8476 Pretrain Macro AUROC 0.9299 Pretrain Macro AUPRC 0.9272
+Epoch: 2 Step: 1000 LR: 0.00100 Loss 0.4289, Pretrain Micro AUROC 0.8689 Pretrain Micro AUPRC 0.8418 Pretrain Macro AUROC 0.9514 Pretrain Macro AUPRC 0.9417
+Epoch: 2 Step: 1500 LR: 0.00100 Loss 0.3978, Pretrain Micro AUROC 0.8804 Pretrain Micro AUPRC 0.8666 Pretrain Macro AUROC 0.9574 Pretrain Macro AUPRC 0.9564
+Epoch: 2 Step: 2000 LR: 0.00100 Loss 0.4012, Pretrain Micro AUROC 0.8829 Pretrain Micro AUPRC 0.8617 Pretrain Macro AUROC 0.9431 Pretrain Macro AUPRC 0.9395
+Epoch: 2 Step: 2500 LR: 0.00100 Loss 0.4323, Pretrain Micro AUROC 0.8688 Pretrain Micro AUPRC 0.8359 Pretrain Macro AUROC 0.9478 Pretrain Macro AUPRC 0.9415
+Epoch: 2 Step: 3000 LR: 0.00100 Loss 0.4110, Pretrain Micro AUROC 0.8752 Pretrain Micro AUPRC 0.8533 Pretrain Macro AUROC 0.9514 Pretrain Macro AUPRC 0.9441
+Epoch: 2 Step: 3500 LR: 0.00100 Loss 0.4021, Pretrain Micro AUROC 0.8813 Pretrain Micro AUPRC 0.8584 Pretrain Macro AUROC 0.9537 Pretrain Macro AUPRC 0.9522
+Epoch: 2 Step: 4000 LR: 0.00100 Loss 0.4248, Pretrain Micro AUROC 0.8710 Pretrain Micro AUPRC 0.8468 Pretrain Macro AUROC 0.9403 Pretrain Macro AUPRC 0.9333
+Epoch: 2 Step: 4500 LR: 0.00100 Loss 0.4196, Pretrain Micro AUROC 0.8749 Pretrain Micro AUPRC 0.8519 Pretrain Macro AUROC 0.9508 Pretrain Macro AUPRC 0.9461
+Epoch: 2 Step: 5000 LR: 0.00100 Loss 0.4134, Pretrain Micro AUROC 0.8747 Pretrain Micro AUPRC 0.8548 Pretrain Macro AUROC 0.9552 Pretrain Macro AUPRC 0.9496
+Epoch: 2 Step: 5500 LR: 0.00100 Loss 0.3945, Pretrain Micro AUROC 0.8851 Pretrain Micro AUPRC 0.8673 Pretrain Macro AUROC 0.9274 Pretrain Macro AUPRC 0.9381
+Epoch: 2 Step: 6000 LR: 0.00100 Loss 0.3952, Pretrain Micro AUROC 0.8853 Pretrain Micro AUPRC 0.8636 Pretrain Macro AUROC 0.9540 Pretrain Macro AUPRC 0.9513
+Epoch: 2 Step: 6500 LR: 0.00100 Loss 0.4158, Pretrain Micro AUROC 0.8724 Pretrain Micro AUPRC 0.8459 Pretrain Macro AUROC 0.9131 Pretrain Macro AUPRC 0.9230
+[2023-11-25 06:23:51] Pretrain done! 

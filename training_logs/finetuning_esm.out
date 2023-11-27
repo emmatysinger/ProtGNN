@@ -1,0 +1,319 @@
+source /etc/profile.d/modules.sh
+Activating txgnn_env2 ...
+Starting training script ...
+[2023-11-27 15:23:26] Importing libraries ...
+[2023-11-27 15:23:26] Loading data ...
+Found local copy...
+Found local copy...
+Found local copy...
+Found saved processed KG... Loading...
+Splits detected... Loading splits....
+Creating DGL graph....
+Done!
+[2023-11-27 15:23:48] Loaded data!
+[2023-11-27 15:23:48] Initializing model ...
+[2023-11-27 15:23:59] Starting to finetune ...
+Epoch: 0 LR: 0.00050 Loss 0.7440, Train Micro AUROC 0.5222 Train Micro AUPRC 0.4957 Train Macro AUROC 0.5136 Train Macro AUPRC 0.4994
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.500534895115244
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.526736822801905
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.4732814278136331
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.5255207971061091
+----------------------------------------------
+Validation.....
+Epoch: 0 LR: 0.00050 Validation Loss 0.7168,  Validation Micro AUROC 0.5165 Validation Micro AUPRC 0.5118 Validation Macro AUROC 0.5233 Validation Macro AUPRC 0.5116 (Best Macro AUROC 0.5233)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.5011658297819581
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.5453993117344852
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.48848995073327883
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.5347552402635356
+----------------------------------------------
+Validation.....
+Epoch: 5 LR: 0.00050 Validation Loss 0.6450,  Validation Micro AUROC 0.6827 Validation Micro AUPRC 0.6813 Validation Macro AUROC 0.6842 Validation Macro AUPRC 0.6737 (Best Macro AUROC 0.6842)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.7459965523507428
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.6223225528204834
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.735943416965507
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.6115371058471325
+----------------------------------------------
+Validation.....
+Epoch: 10 LR: 0.00050 Validation Loss 0.6051,  Validation Micro AUROC 0.7315 Validation Micro AUPRC 0.7392 Validation Macro AUROC 0.7260 Validation Macro AUPRC 0.7275 (Best Macro AUROC 0.7260)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.785350714567969
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.6667110333415378
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.7933359070838226
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.6616009005876425
+----------------------------------------------
+Validation.....
+Epoch: 15 LR: 0.00050 Validation Loss 0.5786,  Validation Micro AUROC 0.7601 Validation Micro AUPRC 0.7723 Validation Macro AUROC 0.7576 Validation Macro AUPRC 0.7610 (Best Macro AUROC 0.7576)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.8207245927497868
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.6945602388827524
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.833851413217404
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.6880643204023624
+----------------------------------------------
+Validation.....
+Epoch: 20 LR: 0.00050 Validation Loss 0.5564,  Validation Micro AUROC 0.7817 Validation Micro AUPRC 0.7949 Validation Macro AUROC 0.7783 Validation Macro AUPRC 0.7814 (Best Macro AUROC 0.7783)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.8437233808201229
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.712819627619441
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.8600710319147103
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7027496980987433
+----------------------------------------------
+Validation.....
+Epoch: 25 LR: 0.00050 Validation Loss 0.5330,  Validation Micro AUROC 0.8024 Validation Micro AUPRC 0.8160 Validation Macro AUROC 0.7969 Validation Macro AUPRC 0.8018 (Best Macro AUROC 0.7969)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.8600301616140409
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7338327839214055
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.8776511830823828
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7258979888263422
+----------------------------------------------
+Validation.....
+Epoch: 30 LR: 0.00050 Validation Loss 0.5178,  Validation Micro AUROC 0.8175 Validation Micro AUPRC 0.8296 Validation Macro AUROC 0.8134 Validation Macro AUPRC 0.8165 (Best Macro AUROC 0.8134)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.8788387520446648
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.748011907762277
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.8939653103435632
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7391317178074752
+----------------------------------------------
+Validation.....
+Epoch: 35 LR: 0.00050 Validation Loss 0.5015,  Validation Micro AUROC 0.8317 Validation Micro AUPRC 0.8426 Validation Macro AUROC 0.8254 Validation Macro AUPRC 0.8276 (Best Macro AUROC 0.8254)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.8909249441854812
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7599479269346648
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9045274604320883
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7506015528494215
+----------------------------------------------
+Validation.....
+Epoch: 40 LR: 0.00050 Validation Loss 0.4882,  Validation Micro AUROC 0.8430 Validation Micro AUPRC 0.8522 Validation Macro AUROC 0.8350 Validation Macro AUPRC 0.8360 (Best Macro AUROC 0.8350)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9001118820516556
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7698933640650234
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9122264198822809
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7598483285382734
+----------------------------------------------
+Validation.....
+Epoch: 45 LR: 0.00050 Validation Loss 0.4789,  Validation Micro AUROC 0.8513 Validation Micro AUPRC 0.8597 Validation Macro AUROC 0.8429 Validation Macro AUPRC 0.8437 (Best Macro AUROC 0.8429)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9070770197604218
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7788172847245894
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9178734020033719
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7694632905818493
+----------------------------------------------
+Epoch: 50 LR: 0.00050 Loss 0.3316, Train Micro AUROC 0.9330 Train Micro AUPRC 0.9295 Train Macro AUROC 0.9225 Train Macro AUPRC 0.9163
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9726795623310605
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8722440393382043
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9698448338231138
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8627043718207019
+----------------------------------------------
+Validation.....
+Epoch: 50 LR: 0.00050 Validation Loss 0.4724,  Validation Micro AUROC 0.8583 Validation Micro AUPRC 0.8659 Validation Macro AUROC 0.8492 Validation Macro AUPRC 0.8498 (Best Macro AUROC 0.8492)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.912849361529838
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7856318534430342
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.922612392110726
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7769100176047115
+----------------------------------------------
+Validation.....
+Epoch: 55 LR: 0.00050 Validation Loss 0.4673,  Validation Micro AUROC 0.8639 Validation Micro AUPRC 0.8710 Validation Macro AUROC 0.8544 Validation Macro AUPRC 0.8548 (Best Macro AUROC 0.8544)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9178173388329139
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7910733482561227
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.926713934587978
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7828563163970121
+----------------------------------------------
+Validation.....
+Epoch: 60 LR: 0.00050 Validation Loss 0.4626,  Validation Micro AUROC 0.8682 Validation Micro AUPRC 0.8747 Validation Macro AUROC 0.8583 Validation Macro AUPRC 0.8583 (Best Macro AUROC 0.8583)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9217524543713477
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7948502237135004
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9298966337335957
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7866460332826206
+----------------------------------------------
+Validation.....
+Epoch: 65 LR: 0.00050 Validation Loss 0.4573,  Validation Micro AUROC 0.8710 Validation Micro AUPRC 0.8776 Validation Macro AUROC 0.8619 Validation Macro AUPRC 0.8620 (Best Macro AUROC 0.8619)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9244713280076406
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7993961296839105
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9321613205727854
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7919185646031701
+----------------------------------------------
+Validation.....
+Epoch: 70 LR: 0.00050 Validation Loss 0.4554,  Validation Micro AUROC 0.8738 Validation Micro AUPRC 0.8801 Validation Macro AUROC 0.8644 Validation Macro AUPRC 0.8644 (Best Macro AUROC 0.8644)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9270935503009188
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8017736837849379
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9344653204915983
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7942562318851685
+----------------------------------------------
+Validation.....
+Epoch: 75 LR: 0.00050 Validation Loss 0.4545,  Validation Micro AUROC 0.8776 Validation Micro AUPRC 0.8834 Validation Macro AUROC 0.8671 Validation Macro AUPRC 0.8669 (Best Macro AUROC 0.8671)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9299368554826202
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8042612733022032
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9368630694727826
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.7969622509644418
+----------------------------------------------
+Validation.....
+Epoch: 80 LR: 0.00050 Validation Loss 0.4530,  Validation Micro AUROC 0.8792 Validation Micro AUPRC 0.8849 Validation Macro AUROC 0.8692 Validation Macro AUPRC 0.8689 (Best Macro AUROC 0.8692)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9320203779958562
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8064638297291259
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9384214253927001
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.79931611523067
+----------------------------------------------
+Validation.....
+Epoch: 85 LR: 0.00050 Validation Loss 0.4606,  Validation Micro AUROC 0.8784 Validation Micro AUPRC 0.8849 Validation Macro AUROC 0.8706 Validation Macro AUPRC 0.8708 (Best Macro AUROC 0.8706)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9327433526295245
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8085205327597451
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9391647899552512
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8025242500902972
+----------------------------------------------
+Validation.....
+Epoch: 90 LR: 0.00050 Validation Loss 0.4534,  Validation Micro AUROC 0.8828 Validation Micro AUPRC 0.8879 Validation Macro AUROC 0.8720 Validation Macro AUPRC 0.8713 (Best Macro AUROC 0.8720)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9351481075675838
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8089108270023979
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9409986869038596
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.801649741321951
+----------------------------------------------
+Validation.....
+Epoch: 95 LR: 0.00050 Validation Loss 0.4546,  Validation Micro AUROC 0.8829 Validation Micro AUPRC 0.8884 Validation Macro AUROC 0.8727 Validation Macro AUPRC 0.8725 (Best Macro AUROC 0.8727)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9354846821738767
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8100143420061785
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9413707754335136
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.803611701260363
+----------------------------------------------
+Epoch: 100 LR: 0.00050 Loss 0.2281, Train Micro AUROC 0.9683 Train Micro AUPRC 0.9646 Train Macro AUROC 0.9594 Train Macro AUPRC 0.9536
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9910811975549805
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.9277254805219992
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9892235318500437
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.9180711588468089
+----------------------------------------------
+Validation.....
+Epoch: 100 LR: 0.00050 Validation Loss 0.4609,  Validation Micro AUROC 0.8827 Validation Micro AUPRC 0.8885 Validation Macro AUROC 0.8736 Validation Macro AUPRC 0.8737 (Best Macro AUROC 0.8736)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9357574385855483
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.811470155152137
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.941640861540552
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8056877196188343
+----------------------------------------------
+Validation.....
+Epoch: 105 LR: 0.00050 Validation Loss 0.4648,  Validation Micro AUROC 0.8834 Validation Micro AUPRC 0.8892 Validation Macro AUROC 0.8741 Validation Macro AUPRC 0.8743 (Best Macro AUROC 0.8741)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9363133653179194
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8119722742432832
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9421679943218201
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8063776645660514
+----------------------------------------------
+Validation.....
+Epoch: 110 LR: 0.00050 Validation Loss 0.4690,  Validation Micro AUROC 0.8841 Validation Micro AUPRC 0.8896 Validation Macro AUROC 0.8747 Validation Macro AUPRC 0.8747 (Best Macro AUROC 0.8747)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.936904134643102
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8124968712437048
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9425463929044418
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8068200796595337
+----------------------------------------------
+Validation.....
+Epoch: 115 LR: 0.00050 Validation Loss 0.4731,  Validation Micro AUROC 0.8845 Validation Micro AUPRC 0.8899 Validation Macro AUROC 0.8750 Validation Macro AUPRC 0.8748 (Best Macro AUROC 0.8750)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9374173276797639
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.812506515110164
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9428861204482981
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8068039992495001
+----------------------------------------------
+Validation.....
+Epoch: 120 LR: 0.00050 Validation Loss 0.4662,  Validation Micro AUROC 0.8870 Validation Micro AUPRC 0.8914 Validation Macro AUROC 0.8759 Validation Macro AUPRC 0.8750 (Best Macro AUROC 0.8759)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9392190072790145
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8126389991007223
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9442848402706269
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8057895780439703
+----------------------------------------------
+Validation.....
+Epoch: 125 LR: 0.00050 Validation Loss 0.4702,  Validation Micro AUROC 0.8874 Validation Micro AUPRC 0.8917 Validation Macro AUROC 0.8759 Validation Macro AUPRC 0.8752 (Best Macro AUROC 0.8759)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9393209462476697
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8125585773215658
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9444773233222109
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8059938290564574
+----------------------------------------------
+Validation.....
+Epoch: 130 LR: 0.00050 Validation Loss 0.4736,  Validation Micro AUROC 0.8874 Validation Micro AUPRC 0.8917 Validation Macro AUROC 0.8761 Validation Macro AUPRC 0.8752 (Best Macro AUROC 0.8761)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9394464265177197
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8126990550873641
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.944574722313829
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8059155947054106
+----------------------------------------------
+Validation.....
+Epoch: 135 LR: 0.00050 Validation Loss 0.4815,  Validation Micro AUROC 0.8869 Validation Micro AUPRC 0.8916 Validation Macro AUROC 0.8761 Validation Macro AUPRC 0.8758 (Best Macro AUROC 0.8761)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.939447218561505
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8128443877882163
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9445692770770513
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8070699441081013
+----------------------------------------------
+Validation.....
+Epoch: 140 LR: 0.00050 Validation Loss 0.4993,  Validation Micro AUROC 0.8855 Validation Micro AUPRC 0.8906 Validation Macro AUROC 0.8754 Validation Macro AUPRC 0.8753 (Best Macro AUROC 0.8761)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9386441154982301
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8121036508392899
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9437193106710172
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8069466285430009
+----------------------------------------------
+Validation.....
+Epoch: 145 LR: 0.00050 Validation Loss 0.4865,  Validation Micro AUROC 0.8891 Validation Micro AUPRC 0.8927 Validation Macro AUROC 0.8770 Validation Macro AUPRC 0.8757 (Best Macro AUROC 0.8770)
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9411770128535065
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.812745367647584
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9458130878962284
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8056624391646858
+----------------------------------------------
+Testing...
+Testing Loss 0.5010 Testing Micro AUROC 0.8824 Testing Micro AUPRC 0.8857 Testing Macro AUROC 0.8727 Testing Macro AUPRC 0.8717
+----- AUROC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.930422701251786
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8149447187420961
+----- AUPRC Performance in Each Relation -----
+('gene/protein', 'molfunc_protein', 'molecular_function'): 0.9356463879847365
+('molecular_function', 'rev_molfunc_protein', 'gene/protein'): 0.8077000980933632
+----------------------------------------------
+[2023-11-27 15:26:22] Finetune done! 

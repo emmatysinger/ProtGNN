@@ -60,33 +60,7 @@ def data_download_wrapper(url, save_path):
         print("Done!")
         
 def preprocess_kg(path, split):
-    if split in ['cell_proliferation', 'mental_health', 'cardiovascular', 'anemia', 'adrenal_gland']:
-        
-        print('Generating disease area using ontology... might take several minutes...')
-        name2id = { 
-                    'cell_proliferation': '14566',
-                    'mental_health': '150',
-                    'cardiovascular': '1287',
-                    'anemia': '2355',
-                    'adrenal_gland': '9553'
-                  }
-
-        ds = DataSplitter(kg_path = path)
-
-        test_kg = ds.get_test_kg_for_disease(name2id[split], test_size = 0.05)
-        all_kg = ds.kg
-        all_kg['split'] = 'train'
-        test_kg['split'] = 'test'
-        df = pd.concat([all_kg, test_kg]).drop_duplicates(subset = ['x_index', 'y_index'], keep = 'last').reset_index(drop = True)
-
-        path = os.path.join(path, split + '_kg')
-        if not os.path.exists(path):
-            os.mkdir(path)
-
-        df.to_csv(os.path.join(path, 'kg.csv'), index = False)
-        df = df[['x_type', 'x_id', 'relation', 'y_type', 'y_id', 'split']]
-
-    elif split in ['binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity']:
+    if split in ['binding', 'transporter activity', 'molecular function regulator', 'oxidoreductase activity', 'hydrolase activity', 'transferase activity']:
         
         print('Generating molecular function area using gene ontology... might take several minutes...')
         name2id = {
@@ -113,7 +87,7 @@ def preprocess_kg(path, split):
         df = df[['x_type', 'x_id', 'relation', 'y_type', 'y_id', 'split']]
         
     else:
-        ## random, complex disease splits
+        ## random splits
         df = pd.read_csv(os.path.join(path, 'kg.csv'))
         df = df[['x_type', 'x_id', 'relation', 'y_type', 'y_id']]
     
@@ -256,10 +230,10 @@ def create_fold(df, fold_seed = 100, frac = [0.7, 0.1, 0.2], method = 'random', 
         out = random_fold(df, fold_seed, [0.95, 0.05, 0.0])
         out['test'] = out['valid'] # this is to avoid error but we are not using testing set metric here
     else:
-        # disease split
+        # molecular function split
         train_val = df[df.split == 'train'].reset_index(drop = True)
         test = df[df.split == 'test'].reset_index(drop = True)
-        out = random_fold(train_val, fold_seed, [0.875, 0.125, 0.0])
+        out = random_fold(train_val, fold_seed, [1-frac[1]/(frac[1+frac[0]]), frac[1]/(frac[1+frac[0]]), 0.0])
         out['test'] = test
     return out['train'], out['valid'], out['test']
 
@@ -817,6 +791,8 @@ def create_dgl_graph(df_train, df):
         o = df_train[df_train.relation == i[1]][['x_idx', 'y_idx']].values.T
         DGL_input[tuple(i)] = (o[0].astype(int), o[1].astype(int))
 
+
+
     temp = dict(df.groupby('x_type')['x_idx'].max())
     temp2 = dict(df.groupby('y_type')['y_idx'].max())
     temp['effect/phenotype'] = 0.0
@@ -841,7 +817,47 @@ def create_dgl_graph(df_train, df):
 
     return g
 
-def initialize_node_embedding(g, n_inp):
+def initialize_node_embedding(g, n_inp, df, df_nodes, esm=False):
+    # initialize embedding xavier uniform
+    for ntype in g.ntypes:
+        if not esm or ntype != 'gene/protein':
+            emb = nn.Parameter(torch.Tensor(g.number_of_nodes(ntype), n_inp), requires_grad = False)
+            nn.init.xavier_uniform_(emb)
+            g.nodes[ntype].data['inp'] = emb
+        elif ntype == 'gene/protein':
+            idx2id = dict(zip(df[df.x_type == 'gene/protein']['x_idx'],df[df.x_type == 'gene/protein']['x_id']))
+            idx2id.update(zip(df[df.y_type == 'gene/protein']['y_idx'],df[df.y_type == 'gene/protein']['y_id']))
+            id2name = dict(zip(df_nodes[df_nodes.node_type == 'gene/protein'].node_id,df_nodes[df_nodes.node_type == 'gene/protein'].node_name))
+            prot_embs = []
+            #get mapping from idx to node name
+            for i in tqdm(range(g.number_of_nodes(ntype))):
+                try:
+                    id = idx2id[i]
+                    name = id2name[str(int(float(id)))]
+                    emb_path = os.path.join('/om/user/tysinger/TxGNN/embeddings/esm_embeddings/', name+'.pt')
+                except Exception as e: 
+                    try:
+                        id = idx2id[i]
+                        name = id2name[id]
+                        emb_path = os.path.join('/om/user/tysinger/TxGNN/embeddings/esm_embeddings/', name+'.pt')
+                    except:
+                        emb_path = 'None'
+
+
+                if os.path.exists(emb_path):
+                    esm_emb = torch.load(emb_path)
+                    prot_embs.append(list(esm_emb['mean_representations'].values())[0])
+                else:
+                    # Create xavier embedding for those without esm embedding
+                    xavier_emb = nn.init.xavier_uniform_(torch.Tensor(1, n_inp)).squeeze() #.tolist()[0]
+                    prot_embs.append(xavier_emb)
+            
+            # convert list to tensor
+            emb = nn.Parameter(torch.stack(prot_embs), requires_grad=False)
+            g.nodes[ntype].data['inp'] = emb
+    return g
+
+def initialize_node_embedding_old(g, n_inp):
     # initialize embedding xavier uniform
     for ntype in g.ntypes:
         emb = nn.Parameter(torch.Tensor(g.number_of_nodes(ntype), n_inp), requires_grad = False)
