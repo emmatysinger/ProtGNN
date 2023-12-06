@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
+os.environ['WANDB_EXECUTABLE'] = '/home/tysinger/.conda/envs/txgnn_env2/bin/python'
+import wandb
 
 import dgl
 from dgl.data.utils import save_graphs
@@ -63,7 +65,7 @@ class TxGNN:
                            ("molecular_function", "rev_molfunc_protein", "gene/protein")]
         
         if self.weight_bias_track:
-            import wandb
+            wandb.login()
             wandb.init(project=proj_name, name=exp_name)  
             self.wandb = wandb
         else:
@@ -84,6 +86,11 @@ class TxGNN:
                                walk_mode = 'bit',
                                path_length = 2,
                                esm = False):
+        
+        if False:
+            self.wandb.config.n_hid = n_hid
+            self.wandb.config.n_inp = n_inp
+            self.wandb.config.n_out = n_out
         
         if self.no_kg and proto:
             print('Ablation study on No-KG. No proto learning is used...')
@@ -211,7 +218,8 @@ class TxGNN:
                        valid_per_n = 25,
                        sweep_wandb = None,
                        save_name = None,
-                       save_per_n = 50):
+                       save_per_n = 50,
+                       b = None):
         
         best_val_acc = 0
         def print(*args, **kwargs):
@@ -235,8 +243,14 @@ class TxGNN:
             scores = torch.sigmoid(torch.cat((pos_score, neg_score)).reshape(-1,))
             labels = [1] * len(pos_score) + [0] * len(neg_score)
             loss = F.binary_cross_entropy(scores, torch.Tensor(labels).float().to(self.device))
+            if b:
+                flood = (loss-b).abs() + b
             optimizer.zero_grad()
-            loss.backward()
+
+            if b:
+                flood.backward()
+            else:
+                loss.backward()
             optimizer.step()
             scheduler.step(loss)
 

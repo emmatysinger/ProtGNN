@@ -265,6 +265,7 @@ class DistMultPredictor(nn.Module):
 
                     graph.apply_edges(self.apply_edges, etype=etype)    
                     out = graph.edges[etype].data['score']
+                    #out = torch.sigmoid(graph.edges[etype].data['score'])
                     s_l.append(out)
                     scores[etype] = out
 

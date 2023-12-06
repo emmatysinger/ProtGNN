@@ -1,11 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=esm-pretrain
-#SBATCH --output=finetuning_esm.out
-#SBATCH --error=finetuning_esm.out
+#SBATCH --job-name=esm_training
+#SBATCH --output=%x.out
+#SBATCH --error=%x.log
 #SBATCH --time=1:00:00
 #SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=30G
+#SBATCH --mem=15G
+
+export JOB_TYPE=finetune
 
 source /etc/profile.d/modules.sh
 cat .bashrc
@@ -21,4 +23,9 @@ conda activate txgnn_env2  # Activate your Python virtual environment if you hav
 export PATH='~/.conda/envs/txgnn_env2/bin':$PATH
 
 echo Starting training script ... 
-python TxGNN/training_script.py
+python TxGNN/training_script.py -f True 
+
+#cp $SLURM_JOB_NAME.out TxGNN/training_logs/
+#python TxGNN/training_logs/parser.py -i TxGNN/training_logs/$SLURM_JOB_NAME.out -o TxGNN/training_logs/$SLURM_JOB_NAME.csv -t $JOB_TYPE
+#python TxGNN/training_logs/eval.py -i TxGNN/training_logs/$SLURM_JOB_NAME.csv -s TxGNN/training_logs/$SLURM_JOB_NAME -t $JOB_TYPE
+

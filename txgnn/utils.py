@@ -22,13 +22,14 @@ from random import choice
 from collections import Counter
 import requests
 from zipfile import ZipFile 
+import builtins
 
 import warnings
 warnings.filterwarnings("ignore")
 
 #device = torch.device("cuda:0")
 
-from .data_splits.datasplit import DataSplitter, DataSplit
+from .data_splits.datasplit import DataSplit
 
 def dataverse_download(url, save_path):
     """dataverse download helper with progress bar
@@ -1129,7 +1130,8 @@ def disease_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
         if show_plot:
             import seaborn as sns
             import matplotlib.pyplot as plt
-            sns.scatterplot(list(range(len(result['Recall@5%']))), list(result['# of Pos'].values())).set_title("#pos scatter plot")
+            sns.scatterplot(x=list(range(len(result['Recall@5%']))), y=list(result['# of Pos'].values()))
+            plt.set_title("#pos scatter plot")
             plt.show()
 
             for i in ['Recall@1%', 'Recall@5%', 'Recall@10%', 'Recall@10', 'Recall@50', 'Recall@100', 'AUROC', 'AUPRC', 'MRR@10', 'MRR@50', 'MRR@100', 'AP@10', 'AP@50', 'AP@100']:
@@ -1253,6 +1255,9 @@ def disease_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
    
 
 def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, model, device, molfunc_ids = None, relation = None, weight_bias_track = False, wandb = None, show_plot = False, verbose = False, return_raw = False, simulate_random = True, only_prediction = False):
+    def print(*args, **kwargs):
+            builtins.print(*args, **kwargs, flush=True)
+
     G = G.to(device)
     model = model.eval()
     from sklearn.metrics import accuracy_score, roc_curve, average_precision_score, recall_score, confusion_matrix, classification_report, roc_auc_score, f1_score, auc, precision_recall_curve
@@ -1261,9 +1266,11 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
 
     pmf_rel_types = ['molfunc_protein']
 
-    molfunc_etypes = [('molecular_function', 'molfunc_protein', 'protein')]
+    molfunc_etypes = [('molecular_function', 'rev_molfunc_protein', 'protein')]
 
-    molfunc_rel_types = ['molfunc_protein']
+    molfunc_rel_types = ['rev_molfunc_protein']
+
+    print('Creating mappings ... ')
 
     df['x_id'] = df.x_id.apply(lambda x: convert2str(x))
     df['y_id'] = df.y_id.apply(lambda x: convert2str(x))
@@ -1288,7 +1295,7 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
     molfunc_ids_rels = {}
 
     for i in ['molfunc_protein']:
-        prot_ids_rels[i] = df[df.relation == i].x_id.unique()
+        prot_ids_rels['rev_' + i] = df[df.relation == i].x_id.unique()
         molfunc_ids_rels[i] = df[df.relation == i].y_id.unique()
 
     num_of_prots_rels = {}
@@ -1297,6 +1304,7 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
         num_of_prots_rels[i] = len(prot_ids_rels['rev_' + i])
         num_of_molfuncs_rels[i] = len(molfunc_ids_rels[i])
 
+    print('Mappings created!')
 
     def mean_reciprocal_rank(rs):
         rs = (np.asarray(r).nonzero()[0] for r in rs)
@@ -1334,9 +1342,9 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
         else:
             ids_rels = prot_ids_rels
             if subset_mode:
-                k10 = int(num_of_prots_rels[rel] * 0.1)
-                k5 = int(num_of_prots_rels[rel] * 0.05)
-                k1 = int(num_of_prots_rels[rel] * 0.01)
+                k10 = int(num_of_prots_rels[rel[4:]] * 0.1)
+                k5 = int(num_of_prots_rels[rel[4:]] * 0.05)
+                k1 = int(num_of_prots_rels[rel[4:]] * 0.01)
                 num_items = num_of_prots_rels
             else:
                 k10 = 792
@@ -1366,7 +1374,7 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
         for i, j in k_num.items():
             AP[i], MRR[i], Recall[i], Recall_Random[i], Enrichment[i], not_in_ranked_list[i], in_ranked_list[i] = {}, {}, {}, {}, {}, {}, {}
 
-        for entity_id in ids_all:
+        for entity_id in tqdm(ids_all):
             pred = preds_all[rel][entity_id]
             lab = labels_all[rel][entity_id]
             # remove training set proteins/molfuncs, which are labelled -1
@@ -1512,23 +1520,46 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
         if show_plot:
             import seaborn as sns
             import matplotlib.pyplot as plt
-            sns.scatterplot(list(range(len(result['Recall@5%']))), list(result['# of Pos'].values())).set_title("#pos scatter plot")
-            plt.show()
+            sns.scatterplot(x = list(range(len(result['Recall@5%']))), y = list(result['# of Pos'].values()))
+            plt.title("#pos scatter plot")
+            plt.ylabel('# of positive labels')
+            plt.savefig(os.path.join(show_plot, 'pos_scatter_plot.png'))
+            plt.clf()
 
+            
             for i in ['Recall@1%', 'Recall@5%', 'Recall@10%', 'Recall@10', 'Recall@50', 'Recall@100', 'AUROC', 'AUPRC', 'MRR@10', 'MRR@50', 'MRR@100', 'AP@10', 'AP@50', 'AP@100']:
-                sns.distplot(list(result[i].values())).set_title(i + " distribution")
-                plt.show()
+                sns.histplot(
+                    list(result[i].values()), kde=True,
+                    stat="density", kde_kws=dict(cut=3),
+                    alpha=.4, edgecolor=(1, 1, 1, .4),
+                )
+                plt.title(i + " distribution")
+                plt.savefig(os.path.join(show_plot,i+'_distribution.png'))
+                #sns.distplot(list(result[i].values())).set_title(i + " distribution")
+                plt.clf()
 
-
+            
             preds_ = np.concatenate([np.array(list(j.values())) for i, j in results['Prediction'].items()]).reshape(-1,)
             labels_ = np.concatenate([np.array(list(j.values())) for i, j in results['Labels'].items()]).reshape(-1,)
 
             preds_pos = preds_[np.where(labels_ == 1)]
             preds_neg = preds_[np.where(labels_ == 0)]
 
-            sns.distplot(preds_neg).set_title("prediction score distribution")
-            sns.distplot(preds_pos)
-            plt.show()
+            sns.histplot(
+                    preds_neg, kde=True,
+                    stat="density", kde_kws=dict(cut=3),
+                    alpha=.4, edgecolor=(1, 1, 1, .4),
+                )
+            plt.title("prediction score distribution")
+            sns.histplot(
+                    preds_pos, kde=True,
+                    stat="density", kde_kws=dict(cut=3),
+                    alpha=.4, edgecolor=(1, 1, 1, .4),
+                )
+            plt.savefig(os.path.join(show_plot, 'prediction_score_distribution.png'))
+            #sns.distplot(preds_neg).set_title("prediction score distribution")
+            #sns.distplot(preds_pos)
+            plt.clf()
 
         return out_dict_mean, out_dict_std
 
@@ -1565,7 +1596,7 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
 
             # construct eval graph
             out = {}
-            src = torch.Tensor([disease_id] * len(labels)).to(device).to(dtype = torch.int64)
+            src = torch.Tensor([molfunc_id] * len(labels)).to(device).to(dtype = torch.int64)
             dst = torch.Tensor(list(labels.keys())).to(device).to(dtype = torch.int64)
             out.update({('molecular_function', rel, 'gene/protein'): (src, dst)})
 
@@ -1591,8 +1622,11 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
             print('Evaluating relation: ' + rel_type[4:])
             preds_, labels_, prot_idxs, prot_names = get_scores_molfunc(rel_type, molfunc_ids)
             preds_all[rel_type], labels_all[rel_type] = preds_, labels_
+            print('Starting to calculate metrics ... ')
             results, _ = calculate_metrics(rel_type, preds_all, labels_all, mode = 'molfunc')
+            print('Starting summary ... ')
             out_dict_mean, out_dict_std = summary(results, rel_type, mode = 'molfunc', show_plot = show_plot, verbose = verbose)
+            print('Done with summary!')
             org_out = [[idx, i, out_dict_mean[i], out_dict_std[i]] for idx, i in enumerate(out_dict_mean.keys())]
             org_out_all[rel_type] = org_out
             metrics_all[rel_type] = results
@@ -1633,4 +1667,464 @@ def molfunc_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, mo
             return out
         else:
             return pd.DataFrame.from_dict(results)
+
+
+
+def eval_molfunc(df, df_train, df_valid, df_test, data_path, G, model, device, molfunc_ids = None, relation = None, wandb = None, show_plot = False, verbose = False, simulate_random = True):
+    def print(*args, **kwargs):
+            builtins.print(*args, **kwargs, flush=True)
+
+    def mean_reciprocal_rank(rs):
+        rs = (np.asarray(r).nonzero()[0] for r in rs)
+        return np.mean([1. / (r[0] + 1) if r.size else 0. for r in rs])
+
+    def precision_at_k(r, k):
+        assert k >= 1
+        r = np.asarray(r)[:k] != 0
+        if r.size != k:
+            raise ValueError('Relevance score length < k')
+        return np.mean(r)
+
+    def average_precision(r):
+        r = np.asarray(r) != 0
+        out = [precision_at_k(r, k + 1) for k in range(r.size) if r[k]]
+        if not out:
+            return 0.
+        return np.mean(out)
+
+    def get_scores_molfunc(rel, molfunc_ids):
+        df_train_valid = pd.concat([df_train, df_valid])
+        df_pmf_test = df_test[df_test.relation.isin(molfunc_rel_types)]
+        df_pmf_train = df_train_valid[df_train_valid.relation.isin(molfunc_rel_types)]
+
+        df_rel_pmf_test = df_pmf_test[df_pmf_test.relation == rel]
+        df_rel_pmf_train = df_pmf_train[df_pmf_train.relation == rel]
+        prot_nodes = G.nodes('gene/protein').cpu().numpy()
+        if molfunc_ids is None:
+            molfunc_ids = df_rel_pmf_test.x_idx.unique()
+        preds_contra = {}
+        labels_contra = {}
+        ids_contra = {}
+
+        for molfunc_id in tqdm(molfunc_ids):
+
+            candidate_pos_test = df_rel_pmf_test[df_rel_pmf_test.x_idx == molfunc_id][['x_idx', 'y_idx']]
+            candidate_pos_train = df_rel_pmf_train[df_rel_pmf_train.x_idx == molfunc_id]
+            prot_pos_test = candidate_pos_test.y_idx.values
+            prot_pos_train_val = candidate_pos_train.y_idx.values
+
+            labels = {}
+            for i in prot_nodes:
+                if i in prot_pos_test:
+                    labels[i] = 1
+                elif i in prot_pos_train_val:
+                    labels[i] = -1
+                    # in the training set
+                else:
+                    labels[i] = 0
+
+            # construct eval graph
+            out = {}
+            src = torch.Tensor([molfunc_id] * len(labels)).to(device).to(dtype = torch.int64)
+            dst = torch.Tensor(list(labels.keys())).to(device).to(dtype = torch.int64)
+            out.update({('molecular_function', rel, 'gene/protein'): (src, dst)})
+
+            g_eval = dgl.heterograph(out, num_nodes_dict={ntype: G.number_of_nodes(ntype) for ntype in G.ntypes}).to(device)
+            
+            model.eval()
+            _, pred_score_rel, _, pred_score = model(G, g_eval)
+            pred = pred_score_rel[('molecular_function', rel, 'gene/protein')].reshape(-1,).detach().cpu().numpy()
+            lab = {idx2id_prot[i]: labels[i] for i in g_eval.edges()[1].detach().cpu().numpy()}
+            preds_contra[idx2id_molfunc[molfunc_id]] = {idx2id_prot[i]: pred[idx] for idx, i in enumerate(g_eval.edges()[1].detach().cpu().numpy())}
+            labels_contra[idx2id_molfunc[molfunc_id]] = lab
+            ids_contra[idx2id_molfunc[molfunc_id]] = g_eval.edges()[1].detach().cpu().numpy()
+
+            del pred_score_rel, pred_score
+        return preds_contra, labels_contra, prot_nodes, [id2name_prot[idx2id_prot[i]] for i in prot_nodes]
+
+    def calculate_metrics(rel, preds_all, labels_all, mode = 'prot', subset_mode = True):
+        if mode == 'prot':
+            etype = pmf_rel_types
+            ids_rels = molfunc_ids_rels
+            k10 = int(num_of_molfuncs_rels[rel] * 0.1)
+            k5 = int(num_of_molfuncs_rels[rel] * 0.05)
+            k1 = int(num_of_molfuncs_rels[rel] * 0.01)
+            num_items = num_of_molfuncs_rels
+
+        else:
+            ids_rels = prot_ids_rels
+            k10 = int(num_of_prots_rels[rel[4:]] * 0.1)
+            k5 = int(num_of_prots_rels[rel[4:]] * 0.05)
+            k1 = int(num_of_prots_rels[rel[4:]] * 0.01)
+            num_items = num_of_prots_rels
+            etype = molfunc_rel_types
+
+        if mode == 'prot':
+            id2name = id2name_molfunc
+            id2name_rev = id2name_prot
+        if mode == 'molfunc':
+            id2name = id2name_prot
+            id2name_rev = id2name_molfunc
+
+        ids_all = list(preds_all[rel].keys())
+
+        name, auroc, auprc =  {}, {}, {}
+        acc, sens, spec, f1, ppv, npv, fpr, fnr, fdr, pos_len, ids, ranked_list = {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+
+        AP, Recall, Recall_Random, not_in_ranked_list, in_ranked_list = {}, {}, {}, {}, {}
+
+        # Enrichment, MRR, 
+
+        molfunc_not_intersecting_list = []
+
+        k_num = {'1%': k1, '5%': k5, '10%': k10, '10': 10, '50': 50, '100': 100}
+        k_num = {'5%': k5, '10%': k10, '50': 50, '100': 100}
+
+        for i, j in k_num.items():
+            AP[i], Recall[i], Recall_Random[i], not_in_ranked_list[i], in_ranked_list[i] = {}, {}, {}, {}, {} #MRR[i], Enrichment[i], , {}, {}
+
+        pos_idx_0_count = 0
+        pos_idx_1_count = 0
+        pos_idx_plus_count = 0
+        for entity_id in tqdm(ids_all):
+            pred = preds_all[rel][entity_id]
+            lab = labels_all[rel][entity_id]
+            # remove training set proteins/molfuncs, which are labelled -1
+            train_ = [i for i,j in lab.items() if j != -1]
+            # retrieving only the proteins/molfuncs that belong to the rel types
+            fixed_keys = np.intersect1d(ids_rels[rel], [i for i,j in lab.items() if j != -1])
+            pred_array = np.array([pred[i] for i in fixed_keys])
+            lab_array = np.array([lab[i] for i in fixed_keys])
+
+            id2idx = {i: idx for idx, i in enumerate(fixed_keys)}
+            idx2id = {idx: i for idx, i in enumerate(fixed_keys)}
+
+            pos_idx = np.where(np.array(lab_array) == 1)[0]
+            pos_len[entity_id] = len(pos_idx)
+
+            
+            if len(pos_idx) == 0:
+                pos_idx_0_count += 1
+                auroc[entity_id] = -1
+                auprc[entity_id] = -1
+            else:
+                try:
+                    auroc[entity_id] = roc_auc_score(lab_array, pred_array)
+                except:
+                    auroc[entity_id] = -1
+                try:
+                    auprc[entity_id] = average_precision_score(lab_array, pred_array)
+                except:    
+                    auprc[entity_id] = -1
+
+            if len(pos_idx) == 1:
+                pos_idx_1_count += 1
+            elif len(pos_idx) > 1:
+                pos_idx_plus_count += 1
+            
+            ranked_list_entity = np.argsort(pred_array)[::-1]
+            ranked_list[entity_id] = [id2name[idx2id[i]] for i in ranked_list_entity]
+            
+            if simulate_random:
+                ranked_list_random = []
+                for i in range(500):
+                    non_guided_prot_list = list(range(len(ranked_list_entity)))
+                    np.random.shuffle(non_guided_prot_list)
+                    ranked_list_random.append(non_guided_prot_list)
+            
+            ranked_list_k = {i: ranked_list_entity[:j] for i,j in k_num.items()}       
+
+            for i, j in ranked_list_k.items():
+                recalled_list = np.intersect1d(ranked_list_k[i], pos_idx)
+                in_ranked_list[i][entity_id] = [id2name[idx2id[x]] for x in recalled_list]
+                not_in_ranked_list[i][entity_id] = [id2name[idx2id[x]] for x in pos_idx if x not in recalled_list]
+                if len(pos_idx) == 0:
+                    Recall[i][entity_id] = -1
+                    Recall_Random[i][entity_id] = -1
+                    #Enrichment[i][entity_id] = -1
+                    AP[i][entity_id] = -1
+                    #MRR[i][entity_id] = -1
+                else:
+                    Recall[i][entity_id] = len(recalled_list)/len(pos_idx)
+                
+                    if simulate_random:
+                        Recall_Random[i][entity_id] = np.mean([len(np.intersect1d(sim_trial[:k_num[i]], pos_idx))/len(pos_idx) for sim_trial in ranked_list_random])
+                    else:
+                        Recall_Random[i][entity_id] = k_num[i]/num_items[rel]
+                        
+                    #Enrichment[i][entity_id] = len(recalled_list) / (Recall_Random[i][entity_id] * len(pos_idx))
+
+                    rs = [1 if x in pos_idx else 0 for x in ranked_list_k[i]]
+                    AP[i][entity_id] = average_precision(rs)
+                    #MRR[i][entity_id] = mean_reciprocal_rank([rs])
+
+            if len(pos_idx) == 0:
+                acc[entity_id] = -1
+                sens[entity_id] = -1
+                spec[entity_id] = -1
+                ppv[entity_id] = -1
+                npv[entity_id] = -1
+                fpr[entity_id] = -1
+                fnr[entity_id] = -1
+                fdr[entity_id] = -1
+            else:
+                y_pred_s = [1 if i else 0 for i in (pred_array >= 0.5)]
+                y = lab_array
+                cm1 = confusion_matrix(y, y_pred_s)
+                if len(cm1) == 1:
+                    cm1 = np.array([[cm1[0,0], 0], [0, 0]])
+                total1=sum(sum(cm1))
+                accuracy1=(cm1[0,0]+cm1[1,1])/total1
+                acc[entity_id] = accuracy1
+
+                sensitivity1 = cm1[1,1]/(cm1[1,0]+cm1[1,1])
+                sens[entity_id] = sensitivity1
+
+                specificity1 = cm1[0,0]/(cm1[0,0]+cm1[0,1])
+                spec[entity_id] = specificity1
+
+                f1[entity_id] = f1_score(y, y_pred_s)
+
+                TN = cm1[0][0]
+                FN = cm1[1][0]
+                TP = cm1[1][1]
+                FP = cm1[0][1]
+
+                # Precision or positive predictive value
+                ppv[entity_id] = TP/(TP+FP)
+                # Negative predictive value
+                npv[entity_id] = TN/(TN+FN)
+                # false positive rate
+                fpr[entity_id] = FP/(FP+TN)
+                # False negative rate
+                fnr[entity_id] = FN/(TP+FN)
+                # False discovery rate
+                fdr[entity_id] = FP/(TP+FP)
+            name[entity_id] = id2name_rev[entity_id]
+            ids[entity_id] = entity_id
+
+        out_dict = {'ID': ids,
+                'Name': name,
+                'Ranked List': ranked_list,            
+                'AUROC': auroc, 
+                'AUPRC': auprc, 
+                'Accuracy': acc,
+                'Sensitivity': sens,
+                'Specificity': spec,
+                'F1': f1,
+                'PPV': ppv,
+                'NPV': npv,
+                'FPR': fpr,
+                'FNR': fnr,
+                'FDR': fdr,
+                '# of Pos': pos_len, 
+                'Prediction': preds_all[rel],
+                'Labels': labels_all[rel]
+               }
+
+        for i in list(k_num.keys()):
+            out_dict.update({'Recall@' + i: Recall[i]})
+            out_dict.update({'Recall_Random@' + i: Recall_Random[i]})
+            #out_dict.update({'Enrichment@' + i: Enrichment[i]})
+            #out_dict.update({'MRR@' + i: MRR[i]})
+            out_dict.update({'AP@' + i: AP[i]})
+            out_dict.update({'Hits@' + i: in_ranked_list[i]})
+            out_dict.update({'Missed@' + i: not_in_ranked_list[i]})
+        
+        print('Count of matrix with pos_idx of 0: ', pos_idx_0_count)
+        print('Count of matrix with pos_idx of 1: ', pos_idx_1_count)
+        print('Count of matrix with pos_idx of greater than 1: ', pos_idx_plus_count)
+
+        return out_dict, molfunc_not_intersecting_list
+    
+    def summary(result, rel_type, mode = 'prot', show_plot = True, verbose = True):
+        out_dict_mean = {}
+        out_dict_std = {}
+        for i in list(result.keys()):
+            if isinstance(list(result[i].values())[0], (int, float)):
+                if verbose:
+                    print('---------')
+                    print(i + ' mean: ', np.mean(list(result[i].values())))
+                    print(i + ' std: ', np.std(list(result[i].values())))
+                    print('---------')
+                out_dict_mean[i] = np.mean(list(result[i].values()))
+                out_dict_std[i] = np.std(list(result[i].values()))
+
+        if show_plot:
+            import seaborn as sns
+            import matplotlib.pyplot as plt
+
+            # PLOT 1
+            sns.histplot(list(result['# of Pos'].values()), kde=False, color="steelblue")
+            plt.title('Histogram of # of Pos')
+            plt.xlabel('# of Positive Edges')
+            plt.ylabel('# of Molecular Function Nodes')
+            plt.savefig(os.path.join(show_plot, 'pos_scatter_plot.png'))
+            plt.clf()
+
+            #sns.scatterplot(x = list(range(len(result['Recall@5%']))), y = list(result['# of Pos'].values()))
+            #plt.title("#pos scatter plot")
+            #plt.ylabel('# of positive labels')
+            
+
+            # PLOT 2
+            hist_view = pd.DataFrame( {key:result[key] for key in ['AUROC','AUPRC','Sensitivity','Specificity','F1', 'PPV', 'NPV']})
+            ax = hist_view.hist(color='steelblue', edgecolor='black',
+                        grid=False, figsize=(12,8), 
+                        sharex=False, sharey=False, alpha=0.7)
+            for axis in ax.flatten():
+                axis.set_xlim([0, 1])
+
+            plt.tight_layout()
+            plt.savefig(os.path.join(show_plot,'histogram.png'))
+            plt.clf()
+
+            # PLOT 3
+            hist_view2 = pd.DataFrame({key:result[key] for key in ['Recall@5%', 'Recall@10%', 'Recall@50', 'Recall@100','AP@50', 'AP@100']})
+            ax = hist_view2.hist(color='sandybrown', edgecolor='black',
+                        grid=False, figsize=(12,8), 
+                        sharex=False, sharey=False, alpha=0.7, bins=20)
+            for axis in ax.flatten():
+                axis.set_xlim([0, 1])
+
+            plt.tight_layout()
+            plt.savefig(os.path.join(show_plot,'histogram2.png'))
+            plt.clf()
+
+            """
+            #for i in ['Recall@1%', 'Recall@5%', 'Recall@10%', 'Recall@10', 'Recall@50', 'Recall@100', 'AUROC', 'AUPRC', 'MRR@10', 'MRR@50', 'MRR@100', 'AP@10', 'AP@50', 'AP@100']:
+            for i in ['Recall@5%', 'Recall@10%', 'Recall@50', 'Recall@100','AP@50', 'AP@100']:
+                sns.histplot(
+                    list(result[i].values()), kde=True,
+                    stat="density", kde_kws=dict(cut=3),
+                    alpha=.4, edgecolor=(1, 1, 1, .4),
+                )
+                plt.title(i + " distribution")
+                plt.savefig(os.path.join(show_plot,i+'_distribution.png'))
+                #sns.distplot(list(result[i].values())).set_title(i + " distribution")
+                plt.clf()
+            """
+            
+            # PLOT 4
+            preds_ = np.concatenate([np.array(list(j.values())) for i, j in results['Prediction'].items()]).reshape(-1,)
+            labels_ = np.concatenate([np.array(list(j.values())) for i, j in results['Labels'].items()]).reshape(-1,)
+
+            preds_pos = preds_[np.where(labels_ == 1)]
+            preds_neg = preds_[np.where(labels_ == 0)]
+
+            sns.histplot(
+                    preds_neg, kde=True,
+                    stat="density", kde_kws=dict(cut=3),
+                    alpha=.4, edgecolor=(1, 1, 1, .4),
+                    label = 'True Negatives'
+                )
+            plt.title("Prediction Score Distribution")
+            sns.histplot(
+                    preds_pos, kde=True,
+                    stat="density", kde_kws=dict(cut=3),
+                    alpha=.4, edgecolor=(1, 1, 1, .4),
+                    label = 'True Positives'
+                )
+            plt.legend()
+            plt.axvline(0.5, color='red', linestyle='--')
+            plt.savefig(os.path.join(show_plot, 'prediction_score_distribution.png'))
+            #sns.distplot(preds_neg).set_title("prediction score distribution")
+            #sns.distplot(preds_pos)
+            plt.clf()
+
+            # PLOT 5
+            sns.histplot(
+                    preds_neg, kde=True,
+                    kde_kws=dict(cut=3),
+                    alpha=.4, edgecolor=(1, 1, 1, .4),
+                    label = 'True Negatives'
+                )
+            plt.title("Prediction Score Distribution")
+            sns.histplot(
+                    preds_pos, kde=True,
+                    kde_kws=dict(cut=3),
+                    alpha=.4, edgecolor=(1, 1, 1, .4),
+                    label = 'True Positives'
+                )
+            plt.legend()
+            plt.axvline(0.5, color='red', linestyle='--')
+            plt.savefig(os.path.join(show_plot, 'prediction_score_distribution_not_density.png'))
+            plt.clf()
+
+        return out_dict_mean, out_dict_std
+
+    G = G.to(device)
+    model = model.eval()
+    from sklearn.metrics import accuracy_score, roc_curve, average_precision_score, recall_score, confusion_matrix, classification_report, roc_auc_score, f1_score, auc, precision_recall_curve
+
+    molfunc_etypes = [('molecular_function', 'rev_molfunc_protein', 'protein')]
+    molfunc_rel_types = ['rev_molfunc_protein']
+
+    print('Creating mappings ... ')
+
+    df['x_id'] = df.x_id.apply(lambda x: convert2str(x))
+    df['y_id'] = df.y_id.apply(lambda x: convert2str(x))
+
+
+    idx2id_molfunc = dict(df[df.x_type == 'molecular_function'][['x_idx', 'x_id']].drop_duplicates().values)
+    idx2id_molfunc.update(dict(df[df.y_type == 'molecular_function'][['y_idx', 'y_id']].drop_duplicates().values))
+    idx2id_prot = dict(df[df.x_type == 'gene/protein'][['x_idx', 'x_id']].drop_duplicates().values)
+    idx2id_prot.update(dict(df[df.y_type == 'gene/protein'][['y_idx', 'y_id']].drop_duplicates().values))
+
+    df_ = pd.read_csv(os.path.join(data_path, 'kg.csv'))
+    df_['x_id'] = df_.x_id.apply(lambda x: convert2str(x))
+    df_['y_id'] = df_.y_id.apply(lambda x: convert2str(x))
+
+    id2name_molfunc = dict(df_[df_.x_type == 'molecular_function'][['x_id', 'x_name']].drop_duplicates().values)
+    id2name_molfunc.update(dict(df_[df_.y_type == 'molecular_function'][['y_id', 'y_name']].drop_duplicates().values))
+    id2name_prot = dict(df_[df_.x_type == 'gene/protein'][['x_id', 'x_name']].drop_duplicates().values)
+    id2name_prot.update(dict(df_[df_.y_type == 'gene/protein'][['y_id', 'y_name']].drop_duplicates().values))
+
+    prot_ids_rels = {}
+    molfunc_ids_rels = {}
+
+    for i in ['molfunc_protein']:
+        prot_ids_rels['rev_' + i] = df[df.relation == i].x_id.unique()
+        molfunc_ids_rels[i] = df[df.relation == i].y_id.unique()
+
+    num_of_prots_rels = {}
+    num_of_molfuncs_rels = {}
+    for i in ['molfunc_protein']:
+        num_of_prots_rels[i] = len(prot_ids_rels['rev_' + i])
+        num_of_molfuncs_rels[i] = len(molfunc_ids_rels[i])
+
+    print('Mappings created!')
+
+    if molfunc_ids is None:
+        temp_d, preds_all, labels_all, org_out_all, metrics_all = {}, {}, {}, {}, {}
+
+        for rel_type in molfunc_rel_types:
+            print('Evaluating relation: ' + rel_type[4:])
+            preds_, labels_, prot_idxs, prot_names = get_scores_molfunc(rel_type, molfunc_ids)
+            preds_all[rel_type], labels_all[rel_type] = preds_, labels_
+            print('Starting to calculate metrics ... ')
+            results, _ = calculate_metrics(rel_type, preds_all, labels_all, mode = 'molfunc')
+            print('Starting summary ... ')
+            out_dict_mean, out_dict_std = summary(results, rel_type, mode = 'molfunc', show_plot = show_plot, verbose = verbose)
+            print('Done with summary!')
+            org_out = [[idx, i, out_dict_mean[i], out_dict_std[i]] for idx, i in enumerate(out_dict_mean.keys())]
+            org_out_all[rel_type] = org_out
+            metrics_all[rel_type] = results
+            
+
+        return {rel_type: pd.DataFrame.from_dict(metrics_all[rel_type]) for rel_type in molfunc_rel_types}
+
+    else:
+        temp_d, preds_all, labels_all, metrics_all = {}, {}, {}, {}
+        
+        rel_type = 'rev_molfunc_protein'
+        
+        preds_, labels_, prot_idxs, prot_names = get_scores_molfunc(rel_type, molfunc_ids)
+        preds_all[rel_type], labels_all[rel_type] = preds_, labels_
+        results, _ = calculate_metrics(rel_type, preds_all, labels_all, mode = 'molfunc')
+        metrics_all[rel_type] = results
+    
+        return pd.DataFrame.from_dict(results)
+    
+
    
