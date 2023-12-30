@@ -1,13 +1,14 @@
 #!/bin/bash
-#SBATCH --job-name=esm_training
-#SBATCH --output=%x.out
-#SBATCH --error=%x.log
-#SBATCH --time=1:00:00
+#SBATCH --array=11-20
+#SBATCH --job-name=finetune_hyper
+#SBATCH --output=%x%a.out
+#SBATCH --error=%x%a.log
+#SBATCH --time=0:30:00
 #SBATCH --gres=gpu:a100:1
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=15G
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=20G
 
-export JOB_TYPE=finetune
+export JOB_TYPE=pretrain
 
 source /etc/profile.d/modules.sh
 cat .bashrc
@@ -22,10 +23,23 @@ conda activate txgnn_env2  # Activate your Python virtual environment if you hav
 
 export PATH='~/.conda/envs/txgnn_env2/bin':$PATH
 
-echo Starting training script ... 
-python TxGNN/training_script.py -f True 
+#index=$((SLURM_ARRAY_TASK_ID - 1))
+
+# Calculate the value for each flag
+# Use base-3 arithmetic where each flag is a digit
+#inp=$((index / 9))              # The hundreds place (in base 3)
+#hid=$(((index / 3) % 3))        # The tens place
+#out=$((index % 3))             # The ones place
+
+# Debug: Print the combination
+#echo "Running job array ID: $SLURM_ARRAY_TASK_ID with inp=$inp, hid=$hid, out=$out"
+
+#echo Starting training script ... 
+python TxGNN/training_script.py -t True -f True
 
 #cp $SLURM_JOB_NAME.out TxGNN/training_logs/
 #python TxGNN/training_logs/parser.py -i TxGNN/training_logs/$SLURM_JOB_NAME.out -o TxGNN/training_logs/$SLURM_JOB_NAME.csv -t $JOB_TYPE
 #python TxGNN/training_logs/eval.py -i TxGNN/training_logs/$SLURM_JOB_NAME.csv -s TxGNN/training_logs/$SLURM_JOB_NAME -t $JOB_TYPE
+#python TxGNN/get_embeddings.py
+#python TxGNN/get_molfunc_profiles.py
 

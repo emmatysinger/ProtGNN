@@ -22,28 +22,23 @@ def main(args):
     print(f'[{get_timestamp()}] Loaded data!')
     print(f'[{get_timestamp()}] Initializing model ...')
 
-    TxGNN_model = TxGNN(data = TxData_inst, 
-                    weight_bias_track = True,
-                    proj_name = 'MEng',
-                    exp_name = 'ESM Finetune LR 0.005',
-                    device = 'cuda:0'
-                    )
-    
-    if args.pretrain:
-        sweep_configuration = {
-            "method": "bayes",
-            "name": "sweep",
-            "metric": {"goal": "minimize", "name": "validation_loss"},
-            "parameters": {
-                "batch_size": {"values": [512, 1024, 2048]},
-                "epochs": {"values": [1,2,3]},
-                "lr": {"max": 0.1, "min": 0.0001},
-            },
-        }
 
-        TxGNN_model.model_initialize(n_hid = 1280, 
-                                n_inp = 1280, 
-                                n_out = 1280, 
+    if (args.pretrain or args.finetune or args.eval) and not args.hyperparameter_tuning:
+        TxGNN_model = TxGNN(data = TxData_inst, 
+                        weight_bias_track = False,
+                        proj_name = 'MEng',
+                        exp_name = 'ESM Finetune Out 128',
+                        device = 'cuda:0'
+                        )
+    
+    if args.pretrain and not args.hyperparameter_tuning:
+        n_inp_list = [128, 512, 1024]
+        n_hid_list = [128, 512, 1024]
+        n_out_list = [128, 512, 1024]
+
+        TxGNN_model.model_initialize(n_hid = n_hid_list[int(args.n_hid)], #512
+                                n_inp = n_inp_list[int(args.n_inp)], #1280
+                                n_out = n_out_list[int(args.n_out)], #512
                                 proto = False, #made this False
                                 proto_num = 3,
                                 attention = False,
@@ -53,45 +48,47 @@ def main(args):
                                 num_walks = 200,
                                 walk_mode = 'bit',
                                 path_length = 2,
-                                esm = True)
+                                esm = False)
         print(f'[{get_timestamp()}] Initialized model!')
 
         print(f'[{get_timestamp()}] Starting to pretrain ...')
         TxGNN_model.pretrain(save_path = '/om/user/tysinger/models', 
-                            name = 'pretrain_esm', 
-                            n_epoch = 3, 
+                            name = 'pretrain_random', 
+                            n_epoch = 2, 
                             learning_rate = 1e-3,
-                            batch_size = 1024, 
-                            train_print_per_n = 500,
-                            save_per_n = 1)
+                            batch_size = 512, 
+                            train_print_per_n = 1000,
+                            save_per_n = 4)
         print(f'[{get_timestamp()}] Pretrain done! ')
 
-        TxGNN_model.save_model('/om/user/tysinger/models/pretrain_esm')
+        TxGNN_model.save_model(f'/om/user/tysinger/models/pretrained_for_finetune_hyper/pretrain_{n_inp_list[int(args.n_inp)]}_{n_hid_list[int(args.n_hid)]}_{n_out_list[int(args.n_out)]}')
+        #TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='pretrain_esm512_emb')
 
-    if args.finetune:
+    if args.finetune and not args.hyperparameter_tuning:
         if args.pretrain:
             TxGNN_model = TxGNN(data = TxData_inst, 
                     weight_bias_track = True,
                     proj_name = 'MEng',
-                    exp_name = 'ESM Finetune',
+                    exp_name = 'ESM Finetune Out 128',
                     device = 'cuda:0'
                     )
-        TxGNN_model.load_pretrained('/om/user/tysinger/models/pretrain_esm_1')
+        TxGNN_model.load_pretrained('/om/user/tysinger/models/pretrain_esm_out128', esm=True)
 
         print(f'[{get_timestamp()}] Starting to finetune ...')
         TxGNN_model.finetune(save_path = '/om/user/tysinger/models', 
                             name = 'esm_finetuned',
                             n_epoch = 150, 
-                            learning_rate = 5e-3,
+                            learning_rate = 5e-4,
                             train_print_per_n = 5,
                             valid_per_n = 10,
                             save_per_n = 1000,
                             b=0.2)
         print(f'[{get_timestamp()}] Finetune done! ')
-        TxGNN_model.save_model('/om/user/tysinger/models/esm_finetunedLRFlood')
+        TxGNN_model.save_model('/om/user/tysinger/models/esm_out128_finetuned')
+        TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='finetune_esm128_emb')
 
     if args.eval:
-        TxGNN_model.load_pretrained('/om/user/tysinger/models/random_finetuned150')
+        TxGNN_model.load_pretrained('/om/user/tysinger/models/esm_finetuned', esm=True)
         print(f'[{get_timestamp()}] Starting evaluation ...')
 
         TxEval_model = TxEval(model = TxGNN_model)
@@ -105,63 +102,105 @@ def main(args):
 
 
         result = TxEval_model.eval_molfunc_centric(molfunc_idxs = 'test_set', #'test_set'
-                                            show_plot = 'random_eval_finetune_update', 
+                                            show_plot = 'esm_eval_finetune', 
                                             verbose = True, 
                                             save_result = True,
-                                            save_name = 'random_eval_finetune_update.pkl',
+                                            save_name = 'esm_eval_finetune.pkl',
                                             return_raw = False)
-        print(result)
 
     if args.hyperparameter_tuning:
-        def train():
-            wandb.init(project="my-first-sweep")
-            print(wandb.config)
-            return None
-            TxGNN_model = TxGNN(data = TxData_inst, 
-                    weight_bias_track = False,
-                    proj_name = 'MEng',
-                    exp_name = 'Sweep_Test',
-                    device = 'cuda:0'
-                    )
+        if args.pretrain:
+            def train():
+                wandb.init(project="Sweep")
+                TxGNN_model = TxGNN(data = TxData_inst, 
+                        weight_bias_track = False,
+                        proj_name = 'MEng',
+                        exp_name = 'Random with Flooding',
+                        device = 'cuda:0'
+                        )
 
-            print('Initializing Model')
-            TxGNN_model.model_initialize(n_hid = wandb.config.n_hid, 
-                            n_inp = wandb.config.n_inp, 
-                            n_out = wandb.config.n_out, 
-                            proto = False, #made this False
-                            proto_num = 3,
-                            attention = False,
-                            sim_measure = 'all_nodes_profile',
-                            bert_measure = 'disease_name',
-                            agg_measure = 'rarity',
-                            num_walks = 200,
-                            walk_mode = 'bit',
-                            path_length = 2)
+                TxGNN_model.model_initialize(n_hid = 512, 
+                                n_inp = 512, 
+                                n_out = 512, 
+                                proto = False, #made this False
+                                proto_num = 3,
+                                attention = False,
+                                sim_measure = 'all_nodes_profile',
+                                bert_measure = 'disease_name',
+                                agg_measure = 'rarity',
+                                num_walks = 200,
+                                walk_mode = 'bit',
+                                path_length = 2)
+
+                TxGNN_model.pretrain(save_path = '/om/user/tysinger/models', 
+                            name = 'pretrain_esm', 
+                            n_epoch = wandb.config.epochs, 
+                            learning_rate = wandb.config.lr,
+                            batch_size = wandb.config.batch_size, 
+                            train_print_per_n = 500,
+                            save_per_n = 1,
+                            sweep_wandb = wandb)
+                
+                TxGNN_model.finetune(n_epoch = 150, 
+                        learning_rate = 5e-4,
+                        train_print_per_n = 500,
+                        valid_per_n = 5,
+                        save_path = '/om/user/tysinger/models', 
+                        name = 'sweep',
+                        sweep_wandb = wandb,
+                        b=0.2)
             
-            TxGNN_model.load_pretrained('/om/user/tysinger/models/pretrain_random_1')
-            print('Finetuning Model')
-            TxGNN_model.finetune(n_epoch = wandb.config.epochs, 
-                    learning_rate = wandb.config.lr,
-                    train_print_per_n = 5,
-                    valid_per_n = 50,
-                    save_path = '/om/user/tysinger/models', 
-                    name = 'sweep')
-        
-        sweep_configuration = {
-            "method": "bayes",
-            "name": "sweep_test",
-            "metric": {"goal": "minimize", "name": "validation_loss"},
-            "parameters": {
-                "n_hid": {"values":[64,128,256,512,1280]}, 
-                "n_inp": {"values":[64,128,256,512,1280]}, 
-                "n_out": {"values":[64,128,256,512,1280]}, 
-                "epochs": {"min": 10, "max": 300},
-                "lr": {"max": 0.1, "min": 0.0001},
-            },
-        }
+            sweep_configuration = {
+                "method": "grid",
+                "name": "sweep_pretrain_val_loss",
+                "metric": {"goal": "minimize", "name": "validation_loss"},
+                "parameters": {
+                    "batch_size": {"values": [256, 512, 1024, 2048]},
+                    "epochs": {"values": [1,2,3]},
+                    "lr": {"values":[1e-3, 1e-4, 5e-4]},
+                },
+            }
 
-        sweep_id = wandb.sweep(sweep= sweep_configuration, project="my-first-sweep")
-        wandb.agent(sweep_id, function=train, count=2)
+            #sweep_id = wandb.sweep(sweep= sweep_configuration, project="Sweep")
+            sweep_id = 'jk3krlqe'
+            wandb.agent(sweep_id, function=train, count=3, project="Sweep")
+
+        if args.finetune:
+            def train():
+                wandb.init(project="Sweep")
+                TxGNN_model = TxGNN(data = TxData_inst, 
+                        weight_bias_track = False,
+                        proj_name = 'MEng',
+                        exp_name = 'Random with Flooding',
+                        device = 'cuda:0'
+                        )
+                
+                TxGNN_model.load_pretrained(f'/om/user/tysinger/models/pretrained_for_finetune_hyper/pretrain_{wandb.config.n_inp}_{wandb.config.n_hid}_{wandb.config.n_out}')
+
+                TxGNN_model.finetune(n_epoch = wandb.config.epochs, 
+                        learning_rate = wandb.config.lr,
+                        train_print_per_n = 500,
+                        valid_per_n = 5,
+                        save_path = '/om/user/tysinger/models', 
+                        name = 'sweep',
+                        sweep_wandb = wandb,
+                        b=None)
+            
+            sweep_configuration = {
+                "method": "bayes",
+                "name": "Finetune",
+                "metric": {"goal": "minimize", "name": "validation_loss"},
+                "parameters": {
+                    "n_inp": {"values":[128,512,1024]}, #64, 256, 1280
+                    "n_hid": {"values":[128,512,1024]}, 
+                    "n_out": {"values":[128,512,1024]}, 
+                    "epochs": {"min": 10, "max": 300},
+                    "lr": {"max": 0.01, "min": 0.00005},
+                },
+            }
+            #sweep_id = wandb.sweep(sweep= sweep_configuration, project="Sweep")
+            sweep_id = 'zwcjfsg7'
+            wandb.agent(sweep_id, function=train, count=5, project = 'Sweep')
     
 
 
@@ -172,6 +211,9 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--finetune', required=False, default=False, help="finetuning")
     parser.add_argument('-e', '--eval', required=False, default=False, help='evaluation')
     parser.add_argument('-t', '--hyperparameter_tuning', required=False, default=False, help='hyperparameter_tuning')
+    parser.add_argument('--n_inp', required=False, default=None, help='n_inp dimensions')
+    parser.add_argument('--n_hid', required=False, default=None, help='n_hid dimensions')
+    parser.add_argument('--n_out', required=False, default=None, help='n_out dimensions')
     args = parser.parse_args()
 
     main(args)

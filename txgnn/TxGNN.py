@@ -86,6 +86,7 @@ class TxGNN:
                                walk_mode = 'bit',
                                path_length = 2,
                                esm = False):
+        print(esm)
         
         if False:
             self.wandb.config.n_hid = n_hid
@@ -180,7 +181,17 @@ class TxGNN:
                 if self.weight_bias_track:
                     self.wandb.log({"Pretraining Loss": loss})
 
-                if step % train_print_per_n == 0:
+                if sweep_wandb is not None:
+                    pass
+                    """
+                    auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc = get_all_metrics_fb(pred_score_pos, pred_score_neg, scores.reshape(-1,).detach().cpu().numpy(), labels, self.G, True)
+                    sweep_wandb.log({'pretraining_loss': loss, 
+                                'pretraining_micro_auroc': micro_auroc,
+                                'pretraining_macro_auroc': macro_auroc,
+                                'pretraining_micro_auprc': micro_auprc, 
+                                'pretraining_macro_auprc': macro_auprc})"""
+
+                elif step % train_print_per_n == 0:
                     # pretraining tracking...
                     auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc = get_all_metrics_fb(pred_score_pos, pred_score_neg, scores.reshape(-1,).detach().cpu().numpy(), labels, self.G, True)
                     
@@ -189,13 +200,6 @@ class TxGNN:
                         temp_d.update({"Pretraining LR": optimizer.param_groups[0]['lr']})
                         self.wandb.log(temp_d)
                     
-                    
-                    if sweep_wandb is not None:
-                        sweep_wandb.log({'pretraining_loss': loss, 
-                                  'pretraining_micro_auroc': micro_auroc,
-                                  'pretraining_macro_auroc': macro_auroc,
-                                  'pretraining_micro_auprc': micro_auprc, 
-                                  'pretraining_macro_auprc': macro_auprc})
                     
                     print('Epoch: %d Step: %d LR: %.5f Loss %.4f, Pretrain Micro AUROC %.4f Pretrain Micro AUPRC %.4f Pretrain Macro AUROC %.4f Pretrain Macro AUPRC %.4f' % (
                         epoch,
@@ -207,6 +211,7 @@ class TxGNN:
                         macro_auroc,
                         macro_auprc
                     ))
+                
             if epoch % save_per_n == 0:
                 self.save_model(os.path.join(save_path, name + f"_{epoch}"))
         self.best_model = copy.deepcopy(self.model)
@@ -221,9 +226,12 @@ class TxGNN:
                        save_per_n = 50,
                        b = None):
         
+        
+        
         best_val_acc = 0
         def print(*args, **kwargs):
             builtins.print(*args, **kwargs, flush=True)
+
 
         self.G = self.G.to(self.device)
         neg_sampler = Full_Graph_NegSampler(self.G, 1, 'fix_dst', self.device)
@@ -284,7 +292,16 @@ class TxGNN:
 
             del pred_score_pos, pred_score_neg, scores, labels
 
-            if (epoch) % valid_per_n == 0:
+            if sweep_wandb is not None:
+                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), val_loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, self.pmf_etypes, self.device, mode = 'valid')
+                sweep_wandb.log({'training_loss': loss,
+                                 'validation_loss': val_loss, 
+                                 'validation_micro_auroc': micro_auroc,
+                                 'validation_macro_auroc': macro_auroc,
+                                 'validation_micro_auprc': micro_auprc, 
+                                 'validation_macro_auprc': macro_auprc})
+
+            elif (epoch) % valid_per_n == 0:
                 # validation tracking...
                 print('Validation.....')
                 (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, self.pmf_etypes, self.device, mode = 'valid')
@@ -361,6 +378,7 @@ class TxGNN:
         print('----- AUPRC Performance in Each Relation -----')
         print_dict(auprc_rel, pmf_only=True, dd_only=False)
         print('----------------------------------------------')
+
         
         
     def save_model(self, path):
@@ -400,14 +418,14 @@ class TxGNN:
                                                                            mode = 'test')
         return pred_score_pos
 
-    def retrieve_embedding(self, path = None):
+    def retrieve_embedding(self, path = None, save_name='node_emb'):
         self.G = self.G.to(self.device)
         h = self.model(self.G, self.G, return_h = True)
         for i,j in h.items():
             h[i] = j.detach().cpu()
             
         if path is not None:
-            with open(os.path.join(path, 'node_emb.pkl'), 'wb') as f:
+            with open(os.path.join(path, save_name + '.pkl'), 'wb') as f:
                 pickle.dump(h, f)
         
         return h
@@ -479,10 +497,13 @@ class TxGNN:
                       
         return similar_diseases
                       
-    def load_pretrained(self, path):
+    def load_pretrained(self, path, esm=False):
         with open(os.path.join(path, 'config.pkl'), 'rb') as f:
             config = pickle.load(f)
-            
+
+        config['esm'] = esm
+        print(config)
+
         self.model_initialize(**config)
         self.config = config
         

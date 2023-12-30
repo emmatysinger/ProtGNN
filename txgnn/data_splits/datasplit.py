@@ -83,7 +83,7 @@ test_kg = ds.get_test_kg_for_disease('GO:0016491')
 '''
 
 '''
-Diseases selected for testing
+Molecular Function selected for testing
 
     Code            Name                            # of nodes        
 
