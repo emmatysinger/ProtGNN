@@ -65,6 +65,7 @@ def main(args):
         #TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='pretrain_esm512_emb')
 
     if args.finetune and not args.hyperparameter_tuning:
+        wandb.init(project="Finetune Types")
         if args.pretrain:
             TxGNN_model = TxGNN(data = TxData_inst, 
                     weight_bias_track = True,
@@ -72,20 +73,23 @@ def main(args):
                     exp_name = 'ESM Finetune Out 128',
                     device = 'cuda:0'
                     )
-        TxGNN_model.load_pretrained('/om/user/tysinger/models/pretrain_esm_out128', esm=True)
+        TxGNN_model.load_pretrained('/om/user/tysinger/models/random_finetuned_out128', esm=False)
 
         print(f'[{get_timestamp()}] Starting to finetune ...')
+        etype = 'MF'
         TxGNN_model.finetune(save_path = '/om/user/tysinger/models', 
-                            name = 'esm_finetuned',
+                            name = 'MF_finetuned',
                             n_epoch = 150, 
                             learning_rate = 5e-4,
                             train_print_per_n = 5,
                             valid_per_n = 10,
                             save_per_n = 1000,
-                            b=0.2)
+                            b=None,
+                            edge_type = etype,
+                            sweep_wandb=wandb)
         print(f'[{get_timestamp()}] Finetune done! ')
-        TxGNN_model.save_model('/om/user/tysinger/models/esm_out128_finetuned')
-        TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='finetune_esm128_emb')
+        TxGNN_model.save_model('/om/user/tysinger/models/finetuned_MF')
+        TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='finetune_MF_emb')
 
     if args.eval:
         TxGNN_model.load_pretrained('/om/user/tysinger/models/esm_finetuned', esm=True)
@@ -167,7 +171,7 @@ def main(args):
 
         if args.finetune:
             def train():
-                wandb.init(project="Sweep")
+                wandb.init(project="Sweep_Test")
                 TxGNN_model = TxGNN(data = TxData_inst, 
                         weight_bias_track = False,
                         proj_name = 'MEng',
@@ -177,14 +181,16 @@ def main(args):
                 
                 TxGNN_model.load_pretrained(f'/om/user/tysinger/models/pretrained_for_finetune_hyper/pretrain_{wandb.config.n_inp}_{wandb.config.n_hid}_{wandb.config.n_out}')
 
+                etype = 'MF'
                 TxGNN_model.finetune(n_epoch = wandb.config.epochs, 
                         learning_rate = wandb.config.lr,
                         train_print_per_n = 500,
                         valid_per_n = 5,
                         save_path = '/om/user/tysinger/models', 
-                        name = 'sweep',
+                        name = 'finetune',
                         sweep_wandb = wandb,
-                        b=None)
+                        b=None, 
+                        edge_type = etype)
             
             sweep_configuration = {
                 "method": "bayes",

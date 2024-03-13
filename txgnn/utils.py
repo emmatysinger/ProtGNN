@@ -440,9 +440,9 @@ def evaluate(model, valid_data, G):
     scores = torch.sigmoid(logits_valid) 
     return get_all_metrics(valid_data.label.values, scores.cpu().detach().numpy(), rels)
 
-def evaluate_fb(model, g_pos, g_neg, G, dd_etypes, device, return_embed = False, mode = 'valid'):
+def evaluate_fb(model, g_pos, g_neg, G, dd_etypes, device, return_embed = False, mode = 'valid', etype='MF'):
     model.eval()
-    pred_score_pos, pred_score_neg, pos_score, neg_score = model(G, g_neg, g_pos, pretrain_mode = False, mode = mode)
+    pred_score_pos, pred_score_neg, pos_score, neg_score = model(G, g_neg, g_pos, pretrain_mode = False, mode = mode, etype=etype)
     
     pos_score = torch.cat([pred_score_pos[i] for i in dd_etypes])
     neg_score = torch.cat([pred_score_neg[i] for i in dd_etypes])
@@ -557,7 +557,7 @@ def disable_all_gradients(module):
     for param in module.parameters():
         param.requires_grad = False
 
-def print_dict(x, dd_only = True, pmf_only = False):
+def print_dict(x, dd_only = True, finetune = False, etype='MF'):
     if dd_only:
         etypes = [('drug', 'contraindication', 'disease'), 
                   ('drug', 'indication', 'disease'), 
@@ -568,10 +568,18 @@ def print_dict(x, dd_only = True, pmf_only = False):
         
         for i in etypes:
             print(str(i) + ': ' + str(x[i]))
-    if pmf_only:
-        etypes = [('gene/protein', 'molfunc_protein', 'molecular_function'),
+    if finetune:
+        etypes_pmf = [('gene/protein', 'molfunc_protein', 'molecular_function'),
                   ('molecular_function', 'rev_molfunc_protein', 'gene/protein')]
-        
+        etypes_pbp = [("gene/protein", "bioprocess_protein", "biological_process"),
+                           ("biological_process", "rev_bioprocess_protein", "gene/protein")]
+        if etype == 'MF':
+            etypes = etypes_pmf
+        elif etype == 'BP':
+            etypes = etypes_pbp
+        elif etype == 'MF/BP':
+            etypes = etypes_pmf + etypes_pbp
+
         for i in etypes:
             print(str(i) + ': ' + str(x[i]))
     else:

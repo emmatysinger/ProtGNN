@@ -44,6 +44,8 @@ class DistMultPredictor(nn.Module):
                            ('disease', 'rev_off-label use', 'drug')]
         self.etypes_pmf = [('gene/protein', 'molfunc_protein', 'molecular_function'),
                            ('molecular_function', 'rev_molfunc_protein', 'gene/protein')]
+        self.etypes_pbp = [("gene/protein", "bioprocess_protein", "biological_process"),
+                           ("biological_process", "rev_bioprocess_protein", "gene/protein")]
         
         self.node_types_dd = ['disease', 'drug']
         self.node_types_pmf = ['gene/protein', 'molecular_function']
@@ -125,7 +127,7 @@ class DistMultPredictor(nn.Module):
         score = torch.sum(h_u * h_r * h_v, dim=1)
         return {'score': score}
 
-    def forward(self, graph, G, h, pretrain_mode, mode, block = None, only_relation = None):
+    def forward(self, graph, G, h, pretrain_mode, mode, block = None, only_relation = None, etype = 'MF'):
         with graph.local_scope():
             scores = {}
             s_l = []
@@ -133,7 +135,12 @@ class DistMultPredictor(nn.Module):
             if len(graph.canonical_etypes) == 1:
                 etypes_train = graph.canonical_etypes
             else:
-                etypes_train = self.etypes_pmf
+                if etype == 'MF':
+                    etypes_train = self.etypes_pmf
+                elif etype == 'BP':
+                    etypes_train = self.etypes_pbp
+                elif etype == 'MF/BP':
+                    etypes_train = self.etypes_pmf + self.etypes_pbp
             
             
             graph.ndata['h'] = h
@@ -469,7 +476,7 @@ class HeteroRGCN(nn.Module):
         return scores, scores_neg, out_pos, out_neg
         
     
-    def forward(self, G, neg_G, eval_pos_G = None, return_h = False, return_att = False, mode = 'train', pretrain_mode = False):
+    def forward(self, G, neg_G, eval_pos_G = None, return_h = False, return_att = False, mode = 'train', pretrain_mode = False, etype='MF'):
         with G.local_scope():
             input_dict = {ntype : G.nodes[ntype].data['inp'] for ntype in G.ntypes}
 
@@ -491,12 +498,12 @@ class HeteroRGCN(nn.Module):
             # full batch
             if eval_pos_G is not None:
                 # eval mode
-                scores, out_pos = self.pred(eval_pos_G, G, h, pretrain_mode, mode = mode + '_pos')
-                scores_neg, out_neg = self.pred(neg_G, G, h, pretrain_mode, mode = mode + '_neg')
+                scores, out_pos = self.pred(eval_pos_G, G, h, pretrain_mode, mode = mode + '_pos', etype=etype)
+                scores_neg, out_neg = self.pred(neg_G, G, h, pretrain_mode, mode = mode + '_neg', etype=etype)
                 return scores, scores_neg, out_pos, out_neg
             else:
-                scores, out_pos = self.pred(G, G, h, pretrain_mode, mode = mode + '_pos')
-                scores_neg, out_neg = self.pred(neg_G, G, h, pretrain_mode, mode = mode + '_neg')
+                scores, out_pos = self.pred(G, G, h, pretrain_mode, mode = mode + '_pos', etype=etype)
+                scores_neg, out_neg = self.pred(neg_G, G, h, pretrain_mode, mode = mode + '_neg', etype=etype)
                 return scores, scores_neg, out_pos, out_neg
     
     def graphmask_forward(self, G, pos_graph, neg_graph, graphmask_mode = False, return_gates = False, only_relation = None):

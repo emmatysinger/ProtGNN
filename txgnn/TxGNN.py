@@ -63,6 +63,8 @@ class TxGNN:
         
         self.pmf_etypes = [("gene/protein", "molfunc_protein", "molecular_function"), 
                            ("molecular_function", "rev_molfunc_protein", "gene/protein")]
+        self.pbp_etypes = [("gene/protein", "bioprocess_protein", "biological_process"),
+                           ("biological_process", "rev_bioprocess_protein", "gene/protein")]
         
         if self.weight_bias_track:
             wandb.login()
@@ -224,9 +226,15 @@ class TxGNN:
                        sweep_wandb = None,
                        save_name = None,
                        save_per_n = 50,
-                       b = None):
+                       b = None,
+                       edge_type = 'MF'):
         
-        
+        if edge_type == 'MF':
+            etypes = self.pmf_etypes
+        elif edge_type == 'BP':
+            etypes = self.pbp_etypes
+        elif edge_type == "MF/BP":
+            etypes = self.pmf_etypes + self.pbp_etypes
         
         best_val_acc = 0
         def print(*args, **kwargs):
@@ -242,10 +250,10 @@ class TxGNN:
         
         for epoch in range(n_epoch):
             negative_graph = neg_sampler(self.G)
-            pred_score_pos, pred_score_neg, pos_score, neg_score = self.model(self.G, negative_graph, pretrain_mode = False, mode = 'train')
+            pred_score_pos, pred_score_neg, pos_score, neg_score = self.model(self.G, negative_graph, pretrain_mode = False, mode = 'train', etype=edge_type)
 
-            pos_score = torch.cat([pred_score_pos[i] for i in self.pmf_etypes]) #CHANGED
-            neg_score = torch.cat([pred_score_neg[i] for i in self.pmf_etypes]) #CHANGED
+            pos_score = torch.cat([pred_score_pos[i] for i in etypes]) #CHANGED
+            neg_score = torch.cat([pred_score_neg[i] for i in etypes]) #CHANGED
             
 
             scores = torch.sigmoid(torch.cat((pos_score, neg_score)).reshape(-1,))
@@ -285,15 +293,15 @@ class TxGNN:
                 ))
 
                 print('----- AUROC Performance in Each Relation -----')
-                print_dict(auroc_rel, pmf_only=True, dd_only=False)
+                print_dict(auroc_rel, finetune=True, dd_only=False, etype=edge_type)
                 print('----- AUPRC Performance in Each Relation -----')
-                print_dict(auprc_rel, pmf_only=True, dd_only=False)
+                print_dict(auprc_rel, finetune=True, dd_only=False, etype=edge_type)
                 print('----------------------------------------------')
 
             del pred_score_pos, pred_score_neg, scores, labels
 
             if sweep_wandb is not None:
-                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), val_loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, self.pmf_etypes, self.device, mode = 'valid')
+                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), val_loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, etypes, self.device, mode = 'valid', etype=edge_type)
                 sweep_wandb.log({'training_loss': loss,
                                  'validation_loss': val_loss, 
                                  'validation_micro_auroc': micro_auroc,
@@ -304,7 +312,7 @@ class TxGNN:
             elif (epoch) % valid_per_n == 0:
                 # validation tracking...
                 print('Validation.....')
-                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, self.pmf_etypes, self.device, mode = 'valid')
+                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, etypes, self.device, mode = 'valid')
 
                 if best_val_acc < macro_auroc:
                     best_val_acc = macro_auroc
@@ -322,9 +330,9 @@ class TxGNN:
                 ))
 
                 print('----- AUROC Performance in Each Relation -----')
-                print_dict(auroc_rel, pmf_only=True, dd_only=False)
+                print_dict(auroc_rel, finetune=True, dd_only=False, etype=edge_type)
                 print('----- AUPRC Performance in Each Relation -----')
-                print_dict(auprc_rel, pmf_only=True, dd_only=False)
+                print_dict(auprc_rel, finetune=True, dd_only=False, etype=edge_type)
                 print('----------------------------------------------')
                 
                 if sweep_wandb is not None:
@@ -348,7 +356,7 @@ class TxGNN:
                 self.save_model(os.path.join(save_path, name + f"_{epoch}"))
         print('Testing...')
 
-        (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss, pred_pos, pred_neg = evaluate_fb(self.best_model, self.g_test_pos, self.g_test_neg, self.G, self.pmf_etypes, self.device, True, mode = 'test')
+        (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss, pred_pos, pred_neg = evaluate_fb(self.best_model, self.g_test_pos, self.g_test_neg, self.G, etypes, self.device, True, mode = 'test', etype=edge_type)
 
         print('Testing Loss %.4f Testing Micro AUROC %.4f Testing Micro AUPRC %.4f Testing Macro AUROC %.4f Testing Macro AUPRC %.4f' % (
             loss,
@@ -374,9 +382,9 @@ class TxGNN:
                 pickle.dump(get_wandb_log_dict(auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc, "Testing"), f)
             
         print('----- AUROC Performance in Each Relation -----')
-        print_dict(auroc_rel, pmf_only=True, dd_only=False)
+        print_dict(auroc_rel, finetune=True, dd_only=False, etype=edge_type)
         print('----- AUPRC Performance in Each Relation -----')
-        print_dict(auprc_rel, pmf_only=True, dd_only=False)
+        print_dict(auprc_rel, finetune=True, dd_only=False, etype=edge_type)
         print('----------------------------------------------')
 
         
@@ -425,6 +433,7 @@ class TxGNN:
             h[i] = j.detach().cpu()
             
         if path is not None:
+            print('Retrieving embeddings ...')
             with open(os.path.join(path, save_name + '.pkl'), 'wb') as f:
                 pickle.dump(h, f)
         

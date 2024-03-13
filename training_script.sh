@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --array=11-20
-#SBATCH --job-name=finetune_hyper
-#SBATCH --output=%x%a.out
-#SBATCH --error=%x%a.log
-#SBATCH --time=0:30:00
+# #SBATCH --array=11-20
+#SBATCH --job-name=finetune_MF
+#SBATCH --output=%x.out
+#SBATCH --error=%x.log
+#SBATCH --time=0:15:00
 #SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=20G
@@ -35,7 +35,7 @@ export PATH='~/.conda/envs/txgnn_env2/bin':$PATH
 #echo "Running job array ID: $SLURM_ARRAY_TASK_ID with inp=$inp, hid=$hid, out=$out"
 
 #echo Starting training script ... 
-python TxGNN/training_script.py -t True -f True
+python TxGNN/training_script.py -f True
 
 #cp $SLURM_JOB_NAME.out TxGNN/training_logs/
 #python TxGNN/training_logs/parser.py -i TxGNN/training_logs/$SLURM_JOB_NAME.out -o TxGNN/training_logs/$SLURM_JOB_NAME.csv -t $JOB_TYPE
