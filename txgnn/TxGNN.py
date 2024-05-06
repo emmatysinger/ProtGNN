@@ -88,12 +88,7 @@ class TxGNN:
                                walk_mode = 'bit',
                                path_length = 2,
                                esm = False):
-        print(esm)
         
-        if False:
-            self.wandb.config.n_hid = n_hid
-            self.wandb.config.n_inp = n_inp
-            self.wandb.config.n_out = n_out
         
         if self.no_kg and proto:
             print('Ablation study on No-KG. No proto learning is used...')
@@ -259,14 +254,14 @@ class TxGNN:
             scores = torch.sigmoid(torch.cat((pos_score, neg_score)).reshape(-1,))
             labels = [1] * len(pos_score) + [0] * len(neg_score)
             loss = F.binary_cross_entropy(scores, torch.Tensor(labels).float().to(self.device))
-            if b:
-                flood = (loss-b).abs() + b
+            #if b:
+            #    flood = (loss-b).abs() + b
             optimizer.zero_grad()
 
-            if b:
-                flood.backward()
-            else:
-                loss.backward()
+            #if b:
+                #flood.backward()
+            #else:
+            loss.backward()
             optimizer.step()
             scheduler.step(loss)
 
@@ -312,7 +307,7 @@ class TxGNN:
             elif (epoch) % valid_per_n == 0:
                 # validation tracking...
                 print('Validation.....')
-                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, etypes, self.device, mode = 'valid')
+                (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss = evaluate_fb(self.model, self.g_valid_pos, self.g_valid_neg, self.G, etypes, self.device, mode = 'valid', etype=edge_type)
 
                 if best_val_acc < macro_auroc:
                     best_val_acc = macro_auroc
@@ -335,13 +330,6 @@ class TxGNN:
                 print_dict(auprc_rel, finetune=True, dd_only=False, etype=edge_type)
                 print('----------------------------------------------')
                 
-                if sweep_wandb is not None:
-                    sweep_wandb.log({'validation_loss': loss, 
-                                  'validation_micro_auroc': micro_auroc,
-                                  'validation_macro_auroc': macro_auroc,
-                                  'validation_micro_auprc': micro_auprc, 
-                                  'validation_macro_auprc': macro_auprc})
-                
                 
                 if self.weight_bias_track:
                     temp_d = get_wandb_log_dict(auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc, "Validation")
@@ -354,6 +342,7 @@ class TxGNN:
 
             if epoch % save_per_n == 0:
                 self.save_model(os.path.join(save_path, name + f"_{epoch}"))
+        
         print('Testing...')
 
         (auroc_rel, auprc_rel, micro_auroc, micro_auprc, macro_auroc, macro_auprc), loss, pred_pos, pred_neg = evaluate_fb(self.best_model, self.g_test_pos, self.g_test_neg, self.G, etypes, self.device, True, mode = 'test', etype=edge_type)

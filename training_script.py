@@ -16,18 +16,30 @@ def main(args):
 
     data_path = '/om/user/tysinger/kg/'
 
+    node_types = ['anatomy', 
+                  'biological_process', 
+                  'cellular_component', 
+                  'disease', 
+                  'drug', 
+                  'effect/phenotype', 
+                  'exposure', 
+                  'molecular_function', 
+                  'pathway']
+
+    node_type = 'pathway'
+
     print(f'[{get_timestamp()}] Loading data ...')
     TxData_inst = TxData(data_folder_path = data_path)
-    TxData_inst.prepare_split(split = 'random', seed = 42, no_kg = False)
+    TxData_inst.prepare_split(split = 'random', seed = 42, no_kg = False, remove_node_type = node_type)
     print(f'[{get_timestamp()}] Loaded data!')
     print(f'[{get_timestamp()}] Initializing model ...')
 
 
     if (args.pretrain or args.finetune or args.eval) and not args.hyperparameter_tuning:
         TxGNN_model = TxGNN(data = TxData_inst, 
-                        weight_bias_track = False,
+                        weight_bias_track = True,
                         proj_name = 'MEng',
-                        exp_name = 'ESM Finetune Out 128',
+                        exp_name = f'ProtGNN Finetune No {node_type}',
                         device = 'cuda:0'
                         )
     
@@ -36,9 +48,9 @@ def main(args):
         n_hid_list = [128, 512, 1024]
         n_out_list = [128, 512, 1024]
 
-        TxGNN_model.model_initialize(n_hid = n_hid_list[int(args.n_hid)], #512
-                                n_inp = n_inp_list[int(args.n_inp)], #1280
-                                n_out = n_out_list[int(args.n_out)], #512
+        TxGNN_model.model_initialize(n_hid = 512, #n_hid_list[int(args.n_hid)], #512
+                                n_inp = 512, #n_inp_list[int(args.n_inp)], #1280
+                                n_out = 1024, #n_out_list[int(args.n_out)], #512
                                 proto = False, #made this False
                                 proto_num = 3,
                                 attention = False,
@@ -53,7 +65,7 @@ def main(args):
 
         print(f'[{get_timestamp()}] Starting to pretrain ...')
         TxGNN_model.pretrain(save_path = '/om/user/tysinger/models', 
-                            name = 'pretrain_random', 
+                            name = f"protgnn_pretrain_no_{node_type.split('/')[0]}", 
                             n_epoch = 2, 
                             learning_rate = 1e-3,
                             batch_size = 512, 
@@ -61,24 +73,24 @@ def main(args):
                             save_per_n = 4)
         print(f'[{get_timestamp()}] Pretrain done! ')
 
-        TxGNN_model.save_model(f'/om/user/tysinger/models/pretrained_for_finetune_hyper/pretrain_{n_inp_list[int(args.n_inp)]}_{n_hid_list[int(args.n_hid)]}_{n_out_list[int(args.n_out)]}')
+        TxGNN_model.save_model(f"/om/user/tysinger/models/protgnn_pretrain_no_{node_type.split('/')[0]}")
         #TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='pretrain_esm512_emb')
 
     if args.finetune and not args.hyperparameter_tuning:
-        wandb.init(project="Finetune Types")
+        #wandb.init(project="MEng")
         if args.pretrain:
             TxGNN_model = TxGNN(data = TxData_inst, 
                     weight_bias_track = True,
                     proj_name = 'MEng',
-                    exp_name = 'ESM Finetune Out 128',
+                    exp_name = 'ProtGNN Finetuned',
                     device = 'cuda:0'
                     )
-        TxGNN_model.load_pretrained('/om/user/tysinger/models/random_finetuned_out128', esm=False)
+        TxGNN_model.load_pretrained(f"/om/user/tysinger/models/protgnn_pretrain_no_{node_type.split('/')[0]}", esm=False)
 
         print(f'[{get_timestamp()}] Starting to finetune ...')
-        etype = 'MF'
+        etype = 'BP'
         TxGNN_model.finetune(save_path = '/om/user/tysinger/models', 
-                            name = 'MF_finetuned',
+                            name = f"protgnn_finetuned_no_{node_type.split('/')[0]}",
                             n_epoch = 150, 
                             learning_rate = 5e-4,
                             train_print_per_n = 5,
@@ -86,10 +98,10 @@ def main(args):
                             save_per_n = 1000,
                             b=None,
                             edge_type = etype,
-                            sweep_wandb=wandb)
+                            sweep_wandb=None)
         print(f'[{get_timestamp()}] Finetune done! ')
-        TxGNN_model.save_model('/om/user/tysinger/models/finetuned_MF')
-        TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='finetune_MF_emb')
+        TxGNN_model.save_model(f"/om/user/tysinger/models/protgnn_finetunedBP_no_{node_type.split('/')[0]}")
+        TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name=f"protgnn_finetuned_no_{node_type.split('/')[0]}")
 
     if args.eval:
         TxGNN_model.load_pretrained('/om/user/tysinger/models/esm_finetuned', esm=True)

@@ -28,7 +28,8 @@ class TxData:
     def prepare_split(self, split = 'random',
                      disease_eval_idx = None,
                      seed = 42,
-                     no_kg = False):
+                     no_kg = False,
+                     remove_node_type = None):
         
         """
         if split not in ['random', 
@@ -80,6 +81,13 @@ class TxData:
         if split != 'random':
             df_test = process_molfunc_area_split(self.data_folder, df, df_test, split)
         
+        if remove_node_type:
+            print(f'Removing node type: {remove_node_type}')
+            df_train = df_train[(df_train['x_type'] != remove_node_type) & (df_train['y_type'] != remove_node_type)]
+            df = df[(df['x_type'] != remove_node_type) & (df['y_type'] != remove_node_type)]
+            df_valid = df_valid[(df_valid['x_type'] != remove_node_type) & (df_valid['y_type'] != remove_node_type)]
+            df_test = df_test[(df_test['x_type'] != remove_node_type) & (df_test['y_type'] != remove_node_type)]
+
         print('Creating DGL graph....')
         # create dgl graph
         g = create_dgl_graph(df_train, df)

@@ -1,14 +1,14 @@
 #!/bin/bash
 # #SBATCH --array=11-20
-#SBATCH --job-name=finetune_MF
+#SBATCH --job-name=pathway_finetune
 #SBATCH --output=%x.out
 #SBATCH --error=%x.log
-#SBATCH --time=0:15:00
+#SBATCH --time=1:00:00
 #SBATCH --gres=gpu:a100:1
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=20G
+#SBATCH --mem=40G
 
-export JOB_TYPE=pretrain
+export JOB_TYPE=finetune
 
 source /etc/profile.d/modules.sh
 cat .bashrc
@@ -42,4 +42,6 @@ python TxGNN/training_script.py -f True
 #python TxGNN/training_logs/eval.py -i TxGNN/training_logs/$SLURM_JOB_NAME.csv -s TxGNN/training_logs/$SLURM_JOB_NAME -t $JOB_TYPE
 #python TxGNN/get_embeddings.py
 #python TxGNN/get_molfunc_profiles.py
+
+#python TxGNN/mantis_functions.py -f True
 
