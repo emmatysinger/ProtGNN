@@ -1,5 +1,5 @@
 import datetime
-from txgnn import TxData, TxGNN, TxEval
+from protgnn import TxData, TxGNN, TxEval
 import builtins
 import time
 import pandas as pd

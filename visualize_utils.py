@@ -5,7 +5,7 @@ from sklearn.manifold import TSNE
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
-from txgnn import TxData
+from protgnn import TxData
 from goatools.obo_parser import GODag
 from goatools.godag.go_tasks import get_go2parents, get_go2children
 import torch
