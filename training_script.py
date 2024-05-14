@@ -75,7 +75,7 @@ def main(args):
         print(f'[{get_timestamp()}] Pretrain done! ')
 
         TxGNN_model.save_model(f"/om/user/tysinger/models/protgnn_pretrain_no_{node_type.split('/')[0]}")
-        #TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='pretrain_esm512_emb')
+        TxGNN_model.retrieve_embedding(path = '/om/user/tysinger/embeddings', save_name='pretrain_esm512_emb')
 
     if args.finetune and not args.hyperparameter_tuning:
         #wandb.init(project="MEng")
