@@ -87,7 +87,8 @@ class TxGNN:
                                num_walks = 200,
                                walk_mode = 'bit',
                                path_length = 2,
-                               esm = False):
+                               esm = False,
+                               esm_path = '/om/user/tysinger/TxGNN/embeddings/esm_embeddings/'):
         
         
         if self.no_kg and proto:
@@ -95,7 +96,7 @@ class TxGNN:
             proto = False
         
         self.G = self.G.to('cpu')
-        self.G = initialize_node_embedding(self.G, n_inp, self.df, self.nodes, esm = esm)
+        self.G = initialize_node_embedding(self.G, n_inp, self.df, self.nodes, esm = esm, esm_path=esm_path)
         self.g_valid_pos, self.g_valid_neg = evaluate_graph_construct(self.df_valid, self.G, 'fix_dst', 1, self.device)
         self.g_test_pos, self.g_test_neg = evaluate_graph_construct(self.df_test, self.G, 'fix_dst', 1, self.device)
 

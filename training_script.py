@@ -60,7 +60,8 @@ def main(args):
                                 num_walks = 200,
                                 walk_mode = 'bit',
                                 path_length = 2,
-                                esm = False)
+                                esm = False,
+                                esm_path = '/om/user/tysinger/TxGNN/embeddings/esm_embeddings/')
         print(f'[{get_timestamp()}] Initialized model!')
 
         print(f'[{get_timestamp()}] Starting to pretrain ...')

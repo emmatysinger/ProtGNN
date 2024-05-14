@@ -826,7 +826,7 @@ def create_dgl_graph(df_train, df):
 
     return g
 
-def initialize_node_embedding(g, n_inp, df, df_nodes, esm=False):
+def initialize_node_embedding(g, n_inp, df, df_nodes, esm=False, esm_path = '/om/user/tysinger/TxGNN/embeddings/esm_embeddings/'):
     # initialize embedding xavier uniform
     for ntype in g.ntypes:
         if not esm or ntype != 'gene/protein':
@@ -843,12 +843,12 @@ def initialize_node_embedding(g, n_inp, df, df_nodes, esm=False):
                 try:
                     id = idx2id[i]
                     name = id2name[str(int(float(id)))]
-                    emb_path = os.path.join('/om/user/tysinger/TxGNN/embeddings/esm_embeddings/', name+'.pt')
+                    emb_path = os.path.join(esm_path, name+'.pt')
                 except Exception as e: 
                     try:
                         id = idx2id[i]
                         name = id2name[id]
-                        emb_path = os.path.join('/om/user/tysinger/TxGNN/embeddings/esm_embeddings/', name+'.pt')
+                        emb_path = os.path.join(esm_path, name+'.pt')
                     except:
                         emb_path = 'None'
 
@@ -866,13 +866,6 @@ def initialize_node_embedding(g, n_inp, df, df_nodes, esm=False):
             g.nodes[ntype].data['inp'] = emb
     return g
 
-def initialize_node_embedding_old(g, n_inp):
-    # initialize embedding xavier uniform
-    for ntype in g.ntypes:
-        emb = nn.Parameter(torch.Tensor(g.number_of_nodes(ntype), n_inp), requires_grad = False)
-        nn.init.xavier_uniform_(emb)
-        g.nodes[ntype].data['inp'] = emb
-    return g
 
 def disease_centric_evaluation(df, df_train, df_valid, df_test, data_path, G, model, device, disease_ids = None, relation = None, weight_bias_track = False, wandb = None, show_plot = False, verbose = False, return_raw = False, simulate_random = True, only_prediction = False):
     G = G.to(device)
